@@ -1,11 +1,13 @@
 import os
 import threading
 import logging
-from typing import Final
+from typing import TYPE_CHECKING, Final
 from pathlib import Path
 from engine.constants import *
 from engine.globals import *
-from engine.types import *
+
+if TYPE_CHECKING:
+    from engine.types import *
 
 logger = logging.getLogger("utils")
 

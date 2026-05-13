@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from engine.constants import *
 from engine.utils import *
 from engine.step import Step
+from engine.worker import Worker
 
 from engine.db import Db, database
 
@@ -81,11 +82,22 @@ class Procedure:
     def session_var_get(self, var_name):
         return self._session.get(var_name)
 
+    def get_worker_from_active_step(self) -> Worker:
+        step_args = self.get_active_step().get_args()
+        worker_name = step_args[DEF_STEP_ARG.TITLE]
+        if not worker_name:
+            raise Exception(f"missing worker in active step")
+        worker: Worker | None = self.session_var_get(worker_name)
+        if not worker:
+            raise Exception(f"missing worker in active step")
+        return worker
+
     def execute(self):
         step = self.get_active_step()
         self.nextstate_next()  # Default nextstate is next, can be changed by step function
         res = step.func(self)
-        step.log(self, res)
+        if res:
+            step.log(self, res)
         return
 
     def set_variable(self, key, value):

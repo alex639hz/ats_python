@@ -55,7 +55,7 @@ class ProcedureBuilder:
         self.append_step(DEF_STEP.TIMER_START, args, lable)
         self.append_step(DEF_STEP.TIMER_WAIT, args, DEF_NO_LABEL)
 
-    def add_worker(self, fcall, fargs, thread_name: str, lable=""):
+    def add_worker(self, thread_name: str, fcall, fargs, lable=""):
         step_args = {
             DEF_STEP_ARG.FUNC_CALL: fcall,
             DEF_STEP_ARG.FUNC_ARGS: fargs,

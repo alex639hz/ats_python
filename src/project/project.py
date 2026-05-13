@@ -8,6 +8,8 @@ from engine.db import database
 from engine.constants import *
 
 # from instruments.instrument import Instrument
+from engine.types import WorkerArgs
+from engine.worker import Worker
 from instruments.instrument_repo import repository
 from instruments.types.instrument_power_supply import PowerSupply
 from instruments.types.instrument_dmm import Dmm
@@ -69,8 +71,26 @@ def measurment_start(procedure: Procedure, args={}):
     return DEF_MSG_OK
 
 
-def example(procedure: Procedure, args={}):
-    logger.info("Example step executed with args: %s", args)
+def my_worker(worker_args: WorkerArgs):
+
+    procedure = worker_args[0]
+    args = worker_args[1]
+
+    # actual task code
+    ##################
+    for i in range(5):
+        time.sleep(1)
+        print(f"worker stage: {i}")
+    ##################
+    ##################
+
+    worker = procedure.get_worker_from_active_step()
+    worker.set_complete()
+
+    # step_args = procedure.get_active_step().get_args()
+    # thread_name = step_args[DEF_STEP_ARG.TITLE]
+    # worker: Worker | None = procedure.session_var_get(thread_name)
+
     return None  # Note: returned data  from thread is ignored
 
 
@@ -82,8 +102,8 @@ def create_procedure_with_builder(label) -> Procedure:
 
     template = ProcedureBuilder(label)
 
-    template.add_worker(example, {"hello": "world"}, "example_worker")
-    template.add_worker_check("example_worker")
+    template.add_worker("my_worker", my_worker, {"hello": "world"})
+    template.add_worker_check("my_worker")
     # template.add_fcall(example, NOARG, "")
     # template.add_fcall(create_session, NOARG, "create_session")
     # template.add_fcall(instruments_setup, NOARG, "setup_instruments")

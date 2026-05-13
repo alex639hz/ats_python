@@ -65,19 +65,21 @@ def worker_start(procedure: Procedure):
     thread_name = step_args[DEF_STEP_ARG.TITLE]
 
     w1 = Worker(procedure, fcall, fargs, thread_name)
-    w1.start()
-    w1.wait()
     procedure.session_var_set(thread_name, w1)
+    w1.start()
+    # w1.wait()
     # procedure.nextstate_next()
 
     pass
 
 
 def worker_check(procedure: Procedure):
-    step_args = procedure.get_active_step().get_args()
-    thread_name = step_args[DEF_STEP_ARG.TITLE]
-    worker: Worker | None = procedure.session_var_get(thread_name)
+    # step_args = procedure.get_active_step().get_args()
+    # thread_name = step_args[DEF_STEP_ARG.TITLE]
+    # worker: Worker | None = procedure.session_var_get(thread_name)
 
+    worker = procedure.get_worker_from_active_step()
+    thread_name = worker.name
     if not worker:
         raise Exception(f"worker '{thread_name}' not found in session")
     elif worker.is_complete():
@@ -85,7 +87,7 @@ def worker_check(procedure: Procedure):
         return f"worker '{thread_name}' completed"
     else:
         procedure.nextstate_stay()
-        return f"worker '{thread_name}' is running"
+        return None  # f"worker '{thread_name}' is running"
 
 
 #     @staticmethod
