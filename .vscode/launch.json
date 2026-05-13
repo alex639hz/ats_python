@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "main",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/main.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "virtual_scope",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/engine/instruments/virtual/virtual_scope.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "playground",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "C:/ATS/src/eldrotec_control.py",
+            "console": "integratedTerminal",
+            "args": [
+                "start",
+                "192.168.0.7:9080",
+                "TA",
+                "65",
+                "RBR"
+            ]
+        },
+    ]
+}

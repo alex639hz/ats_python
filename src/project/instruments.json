@@ -1,0 +1,26 @@
+[
+    {
+        "label": "scope",
+        "type": "SCOPE",
+        "model": "MXR208A",
+        "address": "TCPIP::127.0.0.1::5025::SOCKET",
+        "virtual": true,
+        "virtual_port": 5025
+    },
+    {
+        "label": "dmm",
+        "type": "DMM",
+        "model": "AAA123",
+        "address": "TCPIP::127.0.0.1::5026::SOCKET",
+        "virtual": true,
+        "virtual_port": 5026
+    },
+    {
+        "label": "ps",
+        "type": "PS",
+        "model": "BBB001",
+        "address": "TCPIP::127.0.0.1::5027::SOCKET",
+        "virtual": true,
+        "virtual_port": 5027
+    }
+]

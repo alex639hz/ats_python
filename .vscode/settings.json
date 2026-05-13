@@ -1,0 +1,9 @@
+{
+    "cSpell.words": [
+        "scpi"
+    ],
+    "cSpell.ignoreWords": [
+        "pyvisa"
+    ],
+    "python.REPL.enableREPLSmartSend": false
+}
