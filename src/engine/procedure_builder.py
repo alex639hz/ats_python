@@ -33,16 +33,16 @@ class ProcedureBuilder:
 
         return procedure
 
-    def add_fnull(self, lable):
+    def add_step_null(self, lable):
         self.append_step(DEF_STEP.NULL, NOARG, lable)
 
-    def add_fexit(self, lable="exit"):
+    def add_step_exit(self, lable="exit"):
         self.append_step(DEF_STEP.EXIT, NOARG, lable)
 
-    def add_fcall(self, fcall, fargs, lable):
+    def add_step_function(self, function, args, lable):
         step_args = {
-            DEF_STEP_ARG.FUNC_CALL: fcall,
-            DEF_STEP_ARG.FUNC_ARGS: fargs,
+            DEF_STEP_ARG.FUNCTION: function,
+            DEF_STEP_ARG.ARGS: args,
         }
         self.append_step(
             DEF_STEP.FCALL,
@@ -50,20 +50,20 @@ class ProcedureBuilder:
             lable,
         )
 
-    def add_fwait(self, seconds: float, lable=DEF_NO_LABEL):
+    def add_step_delay(self, seconds: float, lable=DEF_NO_LABEL):
         args = {DEF_STEP_ARG.DURATION_SECONDS: seconds}
         self.append_step(DEF_STEP.TIMER_START, args, lable)
         self.append_step(DEF_STEP.TIMER_WAIT, args, DEF_NO_LABEL)
 
-    def add_worker(self, thread_name: str, fcall, fargs, lable=""):
+    def add_step_worker(self, thread_name: str, function, args, lable=""):
         step_args = {
-            DEF_STEP_ARG.FUNC_CALL: fcall,
-            DEF_STEP_ARG.FUNC_ARGS: fargs,
+            DEF_STEP_ARG.FUNCTION: function,
+            DEF_STEP_ARG.ARGS: args,
             DEF_STEP_ARG.TITLE: thread_name,
         }
         self.append_step(DEF_STEP.WORKER_START, step_args, lable)
 
-    def add_worker_check(self, thread_name, lable=None):
+    def add_step_worker_wait(self, thread_name, lable=None):
         step_args = {
             DEF_STEP_ARG.TITLE: thread_name,
         }

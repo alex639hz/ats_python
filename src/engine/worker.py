@@ -1,6 +1,7 @@
 import threading
 from typing import TYPE_CHECKING, Callable
 
+from engine.types import StepInterface
 from engine.utils import Utils
 
 if TYPE_CHECKING:
@@ -10,7 +11,12 @@ if TYPE_CHECKING:
 class Worker:
     def __init__(self, procedure: Procedure, func: Callable, args={}, thread_name=""):
         self.name = thread_name
-        self.thread = Utils.thread_define(thread_name, func, (procedure, args))
+        worker_tuple = (procedure, args)
+        worker_interface: StepInterface = {
+            "procedure": procedure,
+            "args": args,
+        }
+        self.thread = Utils.thread_define(thread_name, func, worker_interface)
         self.thread_complete = threading.Event()
 
     def start(self):

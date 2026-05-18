@@ -14,14 +14,14 @@ class TestPowerIntegrityStatics:
     def supply_voltage(label: str) -> Procedure:
         """Supply Voltage Accuracy — Verify the DC voltage at the load matches the specified nominal value."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "setup test")
-        procedure_template.add_fcall(func, NOARG, "setup instruments")
-        procedure_template.add_fcall(func, NOARG, "setup dut")
-        procedure_template.add_fcall(func, NOARG, "trigger measurement")
-        procedure_template.add_fcall(func, NOARG, "collect data")
-        procedure_template.add_fcall(func, NOARG, "store results")
-        procedure_template.add_fcall(func, NOARG, "data analysis")
-        procedure_template.add_fcall(func, NOARG, "report generation")
+        procedure_template.add_step_function(func, NOARG, "setup test")
+        procedure_template.add_step_function(func, NOARG, "setup instruments")
+        procedure_template.add_step_function(func, NOARG, "setup dut")
+        procedure_template.add_step_function(func, NOARG, "trigger measurement")
+        procedure_template.add_step_function(func, NOARG, "collect data")
+        procedure_template.add_step_function(func, NOARG, "store results")
+        procedure_template.add_step_function(func, NOARG, "data analysis")
+        procedure_template.add_step_function(func, NOARG, "report generation")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -30,8 +30,8 @@ class TestPowerIntegrityStatics:
     def voltage_ripple_and_noise(label: str) -> Procedure:
         """Voltage Ripple & Noise — Quantify AC variations on the power rail to ensure they don’t violate noise margins."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -40,8 +40,8 @@ class TestPowerIntegrityStatics:
     def load_transient_response(label: str) -> Procedure:
         """Load Transient Response — Measure voltage droop/overshoot when current changes rapidly (load steps)."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -50,8 +50,8 @@ class TestPowerIntegrityStatics:
     def ir_drop_validation(label: str) -> Procedure:
         """IR Drop Validation — Measure voltage loss from source to load under current to ensure it stays within limits."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -60,8 +60,8 @@ class TestPowerIntegrityStatics:
     def powerrail_sequencing(label: str) -> Procedure:
         """Power Rail Sequencing** — Verify rails power up/down in the correct order and timing per spec."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -70,8 +70,8 @@ class TestPowerIntegrityStatics:
     def powersupply_rejection_ratio(label: str) -> Procedure:
         """PSRR (Power Supply Rejection Ratio) — Evaluate how well the system rejects noise from the power supply"""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -80,8 +80,8 @@ class TestPowerIntegrityStatics:
     def decoupling(label: str) -> Procedure:
         """Decoupling Effectiveness — Validate that capacitors suppress high-frequency noise on the rail."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -90,8 +90,8 @@ class TestPowerIntegrityStatics:
     def impedance_profile(label: str) -> Procedure:
         """Impedance Profile (PDN) — Measure power delivery network impedance vs frequency to ensure stability targets."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -100,8 +100,8 @@ class TestPowerIntegrityStatics:
     def inrush_current(label: str) -> Procedure:
         """Inrush Current — Measure initial surge current at power-on to prevent overstress or brownouts."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -112,7 +112,7 @@ class TestPowerIntegrityStatics:
 
         procedure_template = ProcedureBuilder(label)
 
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
 
         procedure = procedure_template.generate_procedure()
 
@@ -124,7 +124,7 @@ class TestPowerIntegrityStatics:
 
         procedure_template = ProcedureBuilder(label)
 
-        procedure_template.add_fcall(func, NOARG, "pre-test configuration")
+        procedure_template.add_step_function(func, NOARG, "pre-test configuration")
 
         procedure = procedure_template.generate_procedure()
 
@@ -163,11 +163,11 @@ class TestBuilderPowerSupply:
         """Supply Voltage Accuracy — Verify the DC voltage at the load matches the specified nominal value."""
         template = ProcedureBuilder(label)
 
-        template.add_fcall(self.create_session, NOARG, "create_session")
-        template.add_fcall(self.setup_instruments, NOARG, "setup_instruments")
-        template.add_fcall(self.setup_dut, NOARG, "setup_dut")
-        template.add_fcall(self.start_measure, NOARG, "start_measure")
-        template.add_fcall(self.report, NOARG, "report")
+        template.add_step_function(self.create_session, NOARG, "create_session")
+        template.add_step_function(self.setup_instruments, NOARG, "setup_instruments")
+        template.add_step_function(self.setup_dut, NOARG, "setup_dut")
+        template.add_step_function(self.start_measure, NOARG, "start_measure")
+        template.add_step_function(self.report, NOARG, "report")
 
         procedure = template.generate_procedure()
 

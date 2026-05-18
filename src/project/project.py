@@ -2,13 +2,16 @@ import logging
 from pathlib import Path
 import time
 from typing import Any
+
+# from engine import utils
 from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
 from engine.db import database
 from engine.constants import *
 
 # from instruments.instrument import Instrument
-from engine.types import WorkerArgs
+from engine.types import StepInterface
+from engine.utils import Utils
 from engine.worker import Worker
 from instruments.instrument_repo import repository
 from instruments.types.instrument_power_supply import PowerSupply
@@ -20,8 +23,8 @@ from project.dut import Dut
 logger = logging.getLogger("[project]")
 
 
-def create_session(procedure: Procedure, args={}):
-
+def create_session(step_interface: StepInterface):
+    procedure, args = Utils.extract_function_interface(step_interface)
     procedure.session_create({"test_cases": ["test1", "test2"], **args})
     return DEF_MSG_OK
 
@@ -71,16 +74,16 @@ def measurment_start(procedure: Procedure, args={}):
     return DEF_MSG_OK
 
 
-def my_worker(worker_args: WorkerArgs):
+def my_worker(step_inteface: StepInterface):
+    """demonstrate a worker running in a seperate thread."""
+    procedure, args = Utils.extract_function_interface(step_inteface)
 
-    procedure = worker_args[0]
-    args = worker_args[1]
-
-    # actual task code
+    # work to be done
     ##################
-    for i in range(5):
+    for i in range(1):
         time.sleep(1)
-        print(f"worker stage: {i}")
+        logger.info(f"worker stage: {i} {args}")
+
     ##################
     ##################
 
@@ -98,25 +101,26 @@ def report(procedure: Procedure, args={}):
     return DEF_MSG_OK
 
 
+# create test procedure by adding steps one by one
 def create_procedure_with_builder(label) -> Procedure:
 
     template = ProcedureBuilder(label)
 
-    template.add_worker("my_worker", my_worker, {"hello": "world"})
-    template.add_worker_check("my_worker")
-    # template.add_fcall(example, NOARG, "")
-    # template.add_fcall(create_session, NOARG, "create_session")
-    # template.add_fcall(instruments_setup, NOARG, "setup_instruments")
-    # template.add_fcall(dut_setup, NOARG, "setup_dut")
-    # template.add_fcall(measurment_start, NOARG, "start_measure")
-    # template.add_fcall(report, NOARG, "report")
-    # template.add_fexit()
+    template.add_step_worker("my_worker", my_worker, {"hello": "world"})
+    template.add_step_worker_wait("my_worker")
+    template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
+    # template.add_step_function(instruments_setup, NOARG, "setup_instruments")
+    # template.add_step_function(dut_setup, NOARG, "setup_dut")
+    # template.add_step_function(measurment_start, NOARG, "start_measure")
+    # template.add_step_function(report, NOARG, "report")
+    # template.add_step_exit()
 
     procedure = template.generate_procedure()
 
     return procedure
 
 
+# create test procedure by using test builder (preset mechanism)
 def create_procedure_with_preset() -> Procedure:
 
     test = TestBuilderPowerSupply()

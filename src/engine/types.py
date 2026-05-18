@@ -1,6 +1,7 @@
-from typing import Any, Tuple, NewType
+from typing import TYPE_CHECKING, Any, Tuple, NewType, TypedDict
 
-from engine.procedure import Procedure
+if TYPE_CHECKING:
+    from engine.procedure import Procedure
 
 _REG_ADDRESS = 0
 _BIT_INDEX = 1
@@ -8,4 +9,8 @@ _BIT_INDEX = 1
 RegisterAddress = NewType("RegisterAddress", int)
 BitIndex = NewType("BitIndex", int)
 BitAddress = NewType("BitAddress", Tuple[RegisterAddress, BitIndex])
-WorkerArgs = NewType("WorkerArgs", tuple[Procedure, dict[str, Any]])
+
+
+class StepInterface(TypedDict):
+    procedure: Procedure
+    args: dict[str, Any]

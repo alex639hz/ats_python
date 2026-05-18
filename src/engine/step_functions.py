@@ -12,37 +12,40 @@ if TYPE_CHECKING:
     from engine.procedure import Procedure
 
 
-def fnull(procedure: Procedure):
+def null(procedure: Procedure):
     procedure.nextstate_next()
     return "null_operation executed"
 
 
-def fexit(procedure: Procedure):
+def exit(procedure: Procedure):
     procedure._framework.call_shutdown()
     return DEF_MSG_OK
 
 
-def fcall(procedure: Procedure):
+def function_call(procedure: Procedure):
 
     step_args = procedure.get_active_step().get_args()
-    fcall: Callable[..., Any] = step_args[DEF_STEP_ARG.FUNC_CALL]
-    fargs: dict[str, Any] = step_args[DEF_STEP_ARG.FUNC_ARGS]
+    function: Callable[..., Any] = step_args[DEF_STEP_ARG.FUNCTION]
+    function_args: dict[str, Any] = step_args[DEF_STEP_ARG.ARGS]
 
     # NOTE set default next state
     procedure.nextstate_next()
-
-    res = fcall(procedure, fargs)
+    worker_interface: StepInterface = {
+        "procedure": procedure,
+        "args": function_args,
+    }
+    res = function(worker_interface)
 
     return res
 
 
-def timer_start(procedure: Procedure):
+def delay_start(procedure: Procedure):
     now = time.monotonic()
     procedure.set_variable(DEF_PROC_PARAM.TIMESTAMP, now)
     return DEF_MSG_OK
 
 
-def timer_wait(procedure: Procedure):
+def delay_check(procedure: Procedure):
     now = time.monotonic()
     start_time = procedure.get_variable(DEF_PROC_PARAM.TIMESTAMP)
     delta = now - start_time
@@ -60,11 +63,11 @@ def timer_wait(procedure: Procedure):
 
 def worker_start(procedure: Procedure):
     step_args = procedure.get_active_step().get_args()
-    fcall = step_args[DEF_STEP_ARG.FUNC_CALL]
-    fargs = step_args[DEF_STEP_ARG.FUNC_ARGS]
+    function = step_args[DEF_STEP_ARG.FUNCTION]
+    args = step_args[DEF_STEP_ARG.ARGS]
     thread_name = step_args[DEF_STEP_ARG.TITLE]
 
-    w1 = Worker(procedure, fcall, fargs, thread_name)
+    w1 = Worker(procedure, function, args, thread_name)
     procedure.session_var_set(thread_name, w1)
     w1.start()
     # w1.wait()
@@ -338,11 +341,11 @@ step_functions = {
     # DEF_STEP_OP.ENGINE_STOP: engine_stop,
     # DEF_STEP_OP.EXIT: exit,
     # DEF_STEP_OP.SCPI_REQUEST: scpi_request,
-    DEF_STEP.NULL: fnull,
-    DEF_STEP.EXIT: fexit,
-    DEF_STEP.FCALL: fcall,
-    DEF_STEP.TIMER_START: timer_start,
-    DEF_STEP.TIMER_WAIT: timer_wait,
+    DEF_STEP.NULL: null,
+    DEF_STEP.EXIT: exit,
+    DEF_STEP.FCALL: function_call,
+    DEF_STEP.TIMER_START: delay_start,
+    DEF_STEP.TIMER_WAIT: delay_check,
     DEF_STEP.WORKER_START: worker_start,
     DEF_STEP.WORKER_WAIT: worker_check,
     # DEF_STEP_OP.SUBPROCESS_RUN_AND_COLLECT: subprocess_run_and_collect,

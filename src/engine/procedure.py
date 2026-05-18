@@ -83,7 +83,8 @@ class Procedure:
         return self._session.get(var_name)
 
     def get_worker_from_active_step(self) -> Worker:
-        step_args = self.get_active_step().get_args()
+        step = self.get_active_step()
+        step_args = step.get_args()
         worker_name = step_args[DEF_STEP_ARG.TITLE]
         if not worker_name:
             raise Exception(f"missing worker in active step")

@@ -134,3 +134,9 @@ class Utils:
                     logger.info(f"[STREAM from FILE] {offset:08d}: {b}")
 
                     offset += 1
+
+    @staticmethod
+    def extract_function_interface(step_interface: StepInterface):
+        procedure = step_interface["procedure"]
+        args = step_interface["args"]
+        return (procedure, args)
