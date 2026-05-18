@@ -115,7 +115,7 @@ class Framework:
             self.logger.info("exit app")
             self.log_listener.stop()
             self.event_shutdown.set()
-            return DEF_MSG_OK
+            return DEF_OK
 
         def load_instruments_json(args={}):
             path: Path = args["path"]

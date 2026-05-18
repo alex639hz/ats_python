@@ -1,6 +1,6 @@
 import time
 import logging
-from engine.constants import DEF_STEP
+from engine.constants import STEP
 from engine.utils import Utils
 from instruments.instrument import Instrument
 from instruments.instrument_repo import repository

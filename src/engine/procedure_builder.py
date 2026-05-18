@@ -18,7 +18,7 @@ class ProcedureBuilder:
         self.label: str = label
         self.steps: list["Step"] = []
 
-    def append_step(self, op: DEF_STEP, args, label):
+    def append_step(self, op: STEP, args, label):
         step = Step(op, args, label, step_functions[op])
         self.steps.append(step)
         return self
@@ -34,41 +34,41 @@ class ProcedureBuilder:
         return procedure
 
     def add_step_null(self, lable):
-        self.append_step(DEF_STEP.NULL, NOARG, lable)
+        self.append_step(STEP.NULL, NOARG, lable)
 
     def add_step_exit(self, lable="exit"):
-        self.append_step(DEF_STEP.EXIT, NOARG, lable)
+        self.append_step(STEP.EXIT, NOARG, lable)
 
     def add_step_function(self, function, args, lable):
         step_args = {
-            DEF_STEP_ARG.FUNCTION: function,
-            DEF_STEP_ARG.ARGS: args,
+            STEP_ARG.FUNCTION: function,
+            STEP_ARG.ARGS: args,
         }
         self.append_step(
-            DEF_STEP.FCALL,
+            STEP.FCALL,
             step_args,
             lable,
         )
 
     def add_step_delay(self, seconds: float, lable=DEF_NO_LABEL):
-        args = {DEF_STEP_ARG.DURATION_SECONDS: seconds}
-        self.append_step(DEF_STEP.TIMER_START, args, lable)
-        self.append_step(DEF_STEP.TIMER_WAIT, args, DEF_NO_LABEL)
+        args = {STEP_ARG.DURATION_SECONDS: seconds}
+        self.append_step(STEP.DELAY_START, args, lable)
+        self.append_step(STEP.DELAY_WAIT, args, DEF_NO_LABEL)
 
     def add_step_worker(self, thread_name: str, function, args, lable=""):
         step_args = {
-            DEF_STEP_ARG.FUNCTION: function,
-            DEF_STEP_ARG.ARGS: args,
-            DEF_STEP_ARG.TITLE: thread_name,
+            STEP_ARG.FUNCTION: function,
+            STEP_ARG.ARGS: args,
+            STEP_ARG.TITLE: thread_name,
         }
-        self.append_step(DEF_STEP.WORKER_START, step_args, lable)
+        self.append_step(STEP.WORKER_START, step_args, lable)
 
     def add_step_worker_wait(self, thread_name, lable=None):
         step_args = {
-            DEF_STEP_ARG.TITLE: thread_name,
+            STEP_ARG.TITLE: thread_name,
         }
         self.append_step(
-            DEF_STEP.WORKER_WAIT,
+            STEP.WORKER_WAIT,
             step_args,
             lable,
         )

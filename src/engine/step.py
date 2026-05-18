@@ -17,7 +17,7 @@ class Step:
         # self.args = args
         # self.operations = self.get_all_step_functions()[operation]
         self.label = label or "NA"
-        self.op: DEF_STEP = op
+        self.op: STEP = op
         self.args = args
         self.func = step_funcion
         self.logger = logging.getLogger("[STEP]")

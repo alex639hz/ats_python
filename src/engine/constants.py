@@ -2,7 +2,7 @@ from enum import Enum
 
 NOARG = {}
 DEF_NO_LABEL = ""
-DEF_MSG_OK = "OK"
+DEF_OK = "OK"
 
 
 class DEF_ECMD(Enum):
@@ -15,7 +15,7 @@ class DEF_ECMD(Enum):
     EXIT = "EXIT"
 
 
-class DEF_STEP(Enum):
+class STEP(Enum):
     # HEAD = "HEAD"  # procedure head
     NULL = "NULL"  # do-nothing operation
     PROCEDURE_START = "PROCEDURE_START"  # start procedure
@@ -23,8 +23,8 @@ class DEF_STEP(Enum):
     JUMP_TO_STEP = "JUMP_TO_STEP"  # jump to step by label
     ENGINE_STOP = "ENGINE_STOP"  # exit engine app
     EXIT = "EXIT"  # exit app
-    TIMER_START = "TIMER_START"  # start a timer
-    TIMER_WAIT = "TIMER_WAIT"  # wait for a timer to complete
+    DELAY_START = "TIMER_START"  # start a timer
+    DELAY_WAIT = "TIMER_WAIT"  # wait for a timer to complete
     # LOOP_FOREVER = "LOOP_FOREVER"  # jump to step by label forever
     # FOR_LOOP = "FOR_LOOP"  # loop for N iterations
     SCRIPT_RUN = "SCRIPT_RUN"  # execute external script
@@ -67,7 +67,7 @@ class DEF_PROC_PARAM(Enum):
     PROCESSES = "PROCESS"
 
 
-class DEF_STEP_ARG(Enum):
+class STEP_ARG(Enum):
     DURATION_SECONDS = "TIMER_TARGET_SECONDS"
     NEXT_LABEL = "NEXT_LABEL"
     PATH = "SCRIPT_PATH"

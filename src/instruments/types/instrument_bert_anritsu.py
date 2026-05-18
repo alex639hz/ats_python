@@ -9,7 +9,7 @@ else:
     import pyvisa
 
 from enum import Enum
-from engine.constants import DEF_STEP
+from engine.constants import STEP
 from engine.utils import Utils
 from engine.instruments.instrument import Instrument
 

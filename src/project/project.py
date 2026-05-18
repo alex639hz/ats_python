@@ -26,7 +26,7 @@ logger = logging.getLogger("[project]")
 def create_session(step_interface: StepInterface):
     procedure, args = Utils.extract_function_interface(step_interface)
     procedure.session_create({"test_cases": ["test1", "test2"], **args})
-    return DEF_MSG_OK
+    return DEF_OK
 
 
 def instruments_setup(procedure: Procedure, args={}):
@@ -49,7 +49,7 @@ def instruments_setup(procedure: Procedure, args={}):
     dmm.setup()
     ps.setup()
 
-    return DEF_MSG_OK
+    return DEF_OK
 
 
 def dut_setup(procedure: Procedure, args={}):
@@ -63,7 +63,7 @@ def dut_setup(procedure: Procedure, args={}):
     )
     session["dut"] = dut
     procedure.session_set(session)
-    return DEF_MSG_OK
+    return DEF_OK
 
 
 def measurment_start(procedure: Procedure, args={}):
@@ -71,34 +71,26 @@ def measurment_start(procedure: Procedure, args={}):
     scope: Scope = repository.get_by_label("scope")
     scope.stream_waveform_data_to_file_demo("waveform.bin")
 
-    return DEF_MSG_OK
+    return DEF_OK
 
 
 def my_worker(step_inteface: StepInterface):
     """demonstrate a worker running in a seperate thread."""
     procedure, args = Utils.extract_function_interface(step_inteface)
 
-    # work to be done
-    ##################
+    # simulate some work
     for i in range(1):
         time.sleep(1)
         logger.info(f"worker stage: {i} {args}")
 
-    ##################
-    ##################
-
     worker = procedure.get_worker_from_active_step()
     worker.set_complete()
 
-    # step_args = procedure.get_active_step().get_args()
-    # thread_name = step_args[DEF_STEP_ARG.TITLE]
-    # worker: Worker | None = procedure.session_var_get(thread_name)
-
-    return None  # Note: returned data  from thread is ignored
+    return None
 
 
 def report(procedure: Procedure, args={}):
-    return DEF_MSG_OK
+    return DEF_OK
 
 
 # create test procedure by adding steps one by one

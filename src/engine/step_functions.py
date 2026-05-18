@@ -19,14 +19,14 @@ def null(procedure: Procedure):
 
 def exit(procedure: Procedure):
     procedure._framework.call_shutdown()
-    return DEF_MSG_OK
+    return DEF_OK
 
 
 def function_call(procedure: Procedure):
 
     step_args = procedure.get_active_step().get_args()
-    function: Callable[..., Any] = step_args[DEF_STEP_ARG.FUNCTION]
-    function_args: dict[str, Any] = step_args[DEF_STEP_ARG.ARGS]
+    function: Callable[..., Any] = step_args[STEP_ARG.FUNCTION]
+    function_args: dict[str, Any] = step_args[STEP_ARG.ARGS]
 
     # NOTE set default next state
     procedure.nextstate_next()
@@ -42,7 +42,7 @@ def function_call(procedure: Procedure):
 def delay_start(procedure: Procedure):
     now = time.monotonic()
     procedure.set_variable(DEF_PROC_PARAM.TIMESTAMP, now)
-    return DEF_MSG_OK
+    return DEF_OK
 
 
 def delay_check(procedure: Procedure):
@@ -50,7 +50,7 @@ def delay_check(procedure: Procedure):
     start_time = procedure.get_variable(DEF_PROC_PARAM.TIMESTAMP)
     delta = now - start_time
     step_args = procedure.get_active_step().get_args()
-    target = step_args[DEF_STEP_ARG.DURATION_SECONDS]
+    target = step_args[STEP_ARG.DURATION_SECONDS]
     should_stay = delta < target
 
     if should_stay:
@@ -63,9 +63,9 @@ def delay_check(procedure: Procedure):
 
 def worker_start(procedure: Procedure):
     step_args = procedure.get_active_step().get_args()
-    function = step_args[DEF_STEP_ARG.FUNCTION]
-    args = step_args[DEF_STEP_ARG.ARGS]
-    thread_name = step_args[DEF_STEP_ARG.TITLE]
+    function = step_args[STEP_ARG.FUNCTION]
+    args = step_args[STEP_ARG.ARGS]
+    thread_name = step_args[STEP_ARG.TITLE]
 
     w1 = Worker(procedure, function, args, thread_name)
     procedure.session_var_set(thread_name, w1)
@@ -341,13 +341,13 @@ step_functions = {
     # DEF_STEP_OP.ENGINE_STOP: engine_stop,
     # DEF_STEP_OP.EXIT: exit,
     # DEF_STEP_OP.SCPI_REQUEST: scpi_request,
-    DEF_STEP.NULL: null,
-    DEF_STEP.EXIT: exit,
-    DEF_STEP.FCALL: function_call,
-    DEF_STEP.TIMER_START: delay_start,
-    DEF_STEP.TIMER_WAIT: delay_check,
-    DEF_STEP.WORKER_START: worker_start,
-    DEF_STEP.WORKER_WAIT: worker_check,
+    STEP.NULL: null,
+    STEP.EXIT: exit,
+    STEP.FCALL: function_call,
+    STEP.DELAY_START: delay_start,
+    STEP.DELAY_WAIT: delay_check,
+    STEP.WORKER_START: worker_start,
+    STEP.WORKER_WAIT: worker_check,
     # DEF_STEP_OP.SUBPROCESS_RUN_AND_COLLECT: subprocess_run_and_collect,
     # DEF_STEP_OP.POPEN: popen,
     # DEF_STEP_OP.INSTRUMENT_INIT: create_step_instrument_init,
