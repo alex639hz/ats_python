@@ -83,6 +83,7 @@ class Procedure:
         return self._session.get(var_name)
 
     def get_worker_from_active_step(self) -> Worker:
+        """return worker reference from procedure session. This function valid ONLY for WORKER_START step"""
         step = self.get_active_step()
         step_args = step.get_args()
         worker_name = step_args[STEP_ARG.TITLE]

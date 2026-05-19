@@ -79,7 +79,7 @@ def my_worker(step_inteface: StepInterface):
     procedure, args = Utils.extract_function_interface(step_inteface)
 
     # simulate some work
-    for i in range(1):
+    for i in range(4):
         time.sleep(1)
         logger.info(f"worker stage: {i} {args}")
 
@@ -98,7 +98,7 @@ def create_procedure_with_builder(label) -> Procedure:
 
     template = ProcedureBuilder(label)
 
-    template.add_step_worker("my_worker", my_worker, {"hello": "world"})
+    template.add_step_worker_start("my_worker", my_worker, {"hello": "world"})
     template.add_step_worker_wait("my_worker")
     template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
     # template.add_step_function(instruments_setup, NOARG, "setup_instruments")

@@ -55,7 +55,7 @@ class ProcedureBuilder:
         self.append_step(STEP.DELAY_START, args, lable)
         self.append_step(STEP.DELAY_WAIT, args, DEF_NO_LABEL)
 
-    def add_step_worker(self, thread_name: str, function, args, lable=""):
+    def add_step_worker_start(self, thread_name: str, function, args, lable=""):
         step_args = {
             STEP_ARG.FUNCTION: function,
             STEP_ARG.ARGS: args,
