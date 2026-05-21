@@ -12,7 +12,6 @@ from engine.constants import *
 # from instruments.instrument import Instrument
 from engine.types import StepInterface
 from engine.utils import Utils
-from engine.worker import Worker
 from instruments.instrument_repo import repository
 from instruments.types.instrument_power_supply import PowerSupply
 from instruments.types.instrument_dmm import Dmm
@@ -66,7 +65,7 @@ def dut_setup(procedure: Procedure, args={}):
     return DEF_OK
 
 
-def measurment_start(procedure: Procedure, args={}):
+def measurement_start(procedure: Procedure, args={}):
 
     scope: Scope = repository.get_by_label("scope")
     scope.stream_waveform_data_to_file_demo("waveform.bin")
@@ -74,17 +73,18 @@ def measurment_start(procedure: Procedure, args={}):
     return DEF_OK
 
 
-def my_worker(step_inteface: StepInterface):
-    """demonstrate a worker running in a seperate thread."""
-    procedure, args = Utils.extract_function_interface(step_inteface)
+def my_worker(step_interface: StepInterface):
+    """demonstrate a worker running in a separate thread."""
+    procedure, args = Utils.extract_function_interface(step_interface)
 
     # simulate some work
-    for i in range(4):
-        time.sleep(1)
+    for i in range(10):
+        time.sleep(0.5)
         logger.info(f"worker stage: {i} {args}")
-
-    worker = procedure.get_worker_from_active_step()
-    worker.set_complete()
+    try:
+        procedure.get_worker_from_active_step().set_complete()
+    except:
+        pass
 
     return None
 
@@ -99,11 +99,11 @@ def create_procedure_with_builder(label) -> Procedure:
     template = ProcedureBuilder(label)
 
     template.add_step_worker_start("my_worker", my_worker, {"hello": "world"})
-    template.add_step_worker_wait("my_worker")
     template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
+    template.add_step_worker_wait("my_worker")
     # template.add_step_function(instruments_setup, NOARG, "setup_instruments")
     # template.add_step_function(dut_setup, NOARG, "setup_dut")
-    # template.add_step_function(measurment_start, NOARG, "start_measure")
+    # template.add_step_function(measurement_start, NOARG, "start_measure")
     # template.add_step_function(report, NOARG, "report")
     # template.add_step_exit()
 
@@ -119,7 +119,7 @@ def create_procedure_with_preset() -> Procedure:
     test.step_init_test(create_session)
     test.step_setup_inst(instruments_setup)
     test.step_dut_setup(dut_setup)
-    test.step_start_measurement(measurment_start)
+    test.step_start_measurement(measurement_start)
     test.step_generate_report(report)
     procedure = test.build("power supply test")
 

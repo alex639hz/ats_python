@@ -16,7 +16,6 @@ class DEF_ECMD(Enum):
 
 
 class STEP(Enum):
-    # HEAD = "HEAD"  # procedure head
     NULL = "NULL"  # do-nothing operation
     PROCEDURE_START = "PROCEDURE_START"  # start procedure
     PROCEDURE_STOP = "PROCEDURE_STOP"  # stop procedure
@@ -25,14 +24,11 @@ class STEP(Enum):
     EXIT = "EXIT"  # exit app
     DELAY_START = "TIMER_START"  # start a timer
     DELAY_WAIT = "TIMER_WAIT"  # wait for a timer to complete
-    # LOOP_FOREVER = "LOOP_FOREVER"  # jump to step by label forever
-    # FOR_LOOP = "FOR_LOOP"  # loop for N iterations
     SCRIPT_RUN = "SCRIPT_RUN"  # execute external script
     SCPI_REQUEST = "SCPI_REQUEST"  # send a scpi command to a device
-    FCALL = "FCALL"  # call a user function
+    FUNCTION_CALL = "FCALL"  # call a user function
     WORKER_START = "START_WORKER"  # call a user function as thread
     WORKER_WAIT = "WAIT_WORKER"  # call a user function as thread
-    INSTRUMENT_INIT = "INSTRUMENT_INIT"  # define an instrument
 
     # execute subprocess  as cli command, wait for completion and collect stdout as text
     SUBPROCESS_RUN_AND_COLLECT = "SUBPROCESS_RUN_AND_COLLECT"
