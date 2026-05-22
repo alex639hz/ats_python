@@ -84,9 +84,8 @@ class Procedure:
 
     def get_worker_from_active_step(self) -> Worker:
         """return worker reference from procedure session. This function valid ONLY for WORKER_START step"""
-        step = self.get_active_step()
-        step_args = step.get_args()
-        worker_name = step_args[STEP_ARG.TITLE]
+        step_args = self.get_active_step().get_args()
+        worker_name = step_args.get(STEP_ARG.TITLE)  # [STEP_ARG.TITLE]
         if not worker_name:
             raise Exception(f"missing worker in active step")
         worker: Worker | None = self.session_var_get(worker_name)

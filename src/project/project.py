@@ -99,8 +99,8 @@ def create_procedure_with_builder(label) -> Procedure:
     template = ProcedureBuilder(label)
 
     template.add_step_worker_start("my_worker", my_worker, {"hello": "world"})
-    template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
     template.add_step_worker_wait("my_worker")
+    # template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
     # template.add_step_function(instruments_setup, NOARG, "setup_instruments")
     # template.add_step_function(dut_setup, NOARG, "setup_dut")
     # template.add_step_function(measurement_start, NOARG, "start_measure")

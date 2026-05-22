@@ -56,7 +56,8 @@ class Framework:
                     command, args = Utils.q_element_get_params(element)
                     self.command_processor(command, args)
                 except queue.Empty:
-                    self.procedure_loop()
+                    pass
+                self.procedure_loop()
 
     def command_processor(self, command, args={}):
         command = DEF_ECMD(command)
