@@ -30,9 +30,9 @@ def create_session(step_interface: StepInterface):
 
 def instruments_setup(procedure: Procedure, args={}):
     session: dict[str, Any] = procedure.session_get()
-    scope: Scope = repository.get_by_label_or_throw("scope")
-    dmm: Dmm = repository.get_by_label_or_throw("dmm")
-    ps: PowerSupply = repository.get_by_label_or_throw("ps")
+    scope: Scope = repository.get_instrument_by_label("scope")
+    dmm: Dmm = repository.get_instrument_by_label("dmm")
+    ps: PowerSupply = repository.get_instrument_by_label("ps")
 
     scope.set_waveform_metadata(
         source="CHAN1",

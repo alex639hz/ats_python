@@ -5,7 +5,7 @@ DEF_NO_LABEL = ""
 DEF_OK = "OK"
 
 
-class DEF_ECMD(Enum):
+class DEF_CMD(Enum):
     NULL = "NULL"
     PROCEDURE_RESTART = "PROCEDURE_RESTART"
     PROCEDURE_PLAY = "PROCEDURE_PLAY"
@@ -26,7 +26,7 @@ class STEP(Enum):
     DELAY_WAIT = "TIMER_WAIT"  # wait for a timer to complete
     SCRIPT_RUN = "SCRIPT_RUN"  # execute external script
     SCPI_REQUEST = "SCPI_REQUEST"  # send a scpi command to a device
-    FUNCTION_CALL = "FCALL"  # call a user function
+    FUNCTION_CALL = "FUNCTION_CALL"  # call a user function
     WORKER_START = "START_WORKER"  # call a user function as thread
     WORKER_WAIT = "WAIT_WORKER"  # call a user function as thread
 

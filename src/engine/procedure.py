@@ -93,7 +93,7 @@ class Procedure:
             raise Exception(f"missing worker in active step")
         return worker
 
-    def execute(self):
+    def execution_processor(self):
         step = self.get_active_step()
         self.nextstate_next()  # Default nextstate is next, can be changed by step function
         res = step.func(self)

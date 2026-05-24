@@ -75,10 +75,6 @@ def worker_start(procedure: Procedure):
 
 
 def worker_wait(procedure: Procedure):
-    # step_args = procedure.get_active_step().get_args()
-    # thread_name = step_args[DEF_STEP_ARG.TITLE]
-    # worker: Worker | None = procedure.session_var_get(thread_name)
-
     worker = procedure.get_worker_from_active_step()
     thread_name = worker.name
     if not worker:

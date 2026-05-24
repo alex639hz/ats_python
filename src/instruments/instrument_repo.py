@@ -24,11 +24,11 @@ class InstrumentRepo:
         inst = self.repo.get(label)  # type: ignore
         return inst
 
-    def get_by_label_or_throw(self, label) -> Any:
+    def get_instrument_by_label(self, label) -> Any:
         inst = self.get_by_label(label)  # type: ignore
 
         if inst is None:
-            raise Exception(f"'{label}' not found in repository")
+            raise Exception(f"instrument not found: {label}")
 
         return inst
 

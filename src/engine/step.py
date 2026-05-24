@@ -10,16 +10,11 @@ if TYPE_CHECKING:
 
 
 class Step:
-    def __init__(self, op, args, label, step_funcion):
-        # self.procedure = procedure
-        # self.label = label
-        # self.op: DEF_STEP_OP = operation
-        # self.args = args
-        # self.operations = self.get_all_step_functions()[operation]
+    def __init__(self, op, args, label, step_function):
         self.label = label or "NA"
         self.op: STEP = op
         self.args = args
-        self.func = step_funcion
+        self.func = step_function
         self.logger = logging.getLogger("[STEP]")
 
     def execute(self, procedure: Procedure):

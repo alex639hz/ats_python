@@ -40,27 +40,23 @@ class Framework:
         if use_json_instrument:
             BASE_DIR = Path(__file__).resolve().parent / ".."
             path = BASE_DIR / "project" / "instruments.json"
-            self.q_eng_add_element(DEF_ECMD.INIT_INSTRUMENTS_FROM_JSON, {"path": path})
+            self.q_eng_add_element(DEF_CMD.INIT_INSTRUMENTS_FROM_JSON, {"path": path})
 
         self.engine_thread = Utils.thread_define("engineThread", self.thread_method)
         self.engine_thread.start()
 
     def thread_method(self):
         while not self.event_shutdown.is_set():
-            EXECUTE_ALL_COMMANDS = True
-            while EXECUTE_ALL_COMMANDS:
-                try:
-                    element = self.q_eng.get(
-                        block=True, timeout=DEF_ENG_INTERVAL_SECONDS
-                    )
-                    command, args = Utils.q_element_get_params(element)
-                    self.command_processor(command, args)
-                except queue.Empty:
-                    pass
-                self.procedure_loop()
+            try:
+                element = self.q_eng.get(block=True, timeout=DEF_ENG_INTERVAL_SECONDS)
+                command, args = Utils.q_element_get_params(element)
+                self.command_processor(command, args)
+            except queue.Empty:
+                pass
+            self.procedure_loop()
 
     def command_processor(self, command, args={}):
-        command = DEF_ECMD(command)
+        command = DEF_CMD(command)
         handler = self.command_handlers(command)
         res = handler(args)
         self.log(command, res)
@@ -74,26 +70,26 @@ class Framework:
         return
 
     def procedure_processor(self, procedure: Procedure):
-        procedure.execute()
+        procedure.execution_processor()
         procedure.nextstate_processor()
 
-    def q_eng_add_element(self, element: DEF_ECMD, args=None):
+    def q_eng_add_element(self, element: DEF_CMD, args=None):
         self.q_eng.put(Utils.q_element_create(element.value, args))
 
     def call_shutdown(self):
-        self.q_eng_add_element(DEF_ECMD.EXIT)
+        self.q_eng_add_element(DEF_CMD.EXIT)
 
     def log(self, command, res):
-        command = DEF_ECMD(command).value
+        command = DEF_CMD(command).value
         self.logger.info(f"[COMMAND]\t{command} -> {res}")
 
     def start(self):
         self.event_shutdown.set()
 
     def procedure_append(self, procedure: Procedure):
-        self.q_eng_add_element(DEF_ECMD.PROCEDURE_APPEND, {"procedure": procedure})
+        self.q_eng_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
 
-    def command_handlers(self, func_name: DEF_ECMD):
+    def command_handlers(self, func_name: DEF_CMD):
         def func(args):
             pass
 
@@ -130,11 +126,11 @@ class Framework:
             return "instruments initialized from json OK"
 
         func_dict = {
-            DEF_ECMD.INIT_INSTRUMENTS_FROM_JSON: load_instruments_json,
-            DEF_ECMD.PROCEDURE_PLAY: func,
-            DEF_ECMD.PROCEDURE_PAUSE: func,
-            DEF_ECMD.PROCEDURE_APPEND: procedure_append,
-            DEF_ECMD.EXIT: exit,
+            DEF_CMD.INIT_INSTRUMENTS_FROM_JSON: load_instruments_json,
+            DEF_CMD.PROCEDURE_PLAY: func,
+            DEF_CMD.PROCEDURE_PAUSE: func,
+            DEF_CMD.PROCEDURE_APPEND: procedure_append,
+            DEF_CMD.EXIT: exit,
         }
         return func_dict[func_name]
 
