@@ -3,6 +3,7 @@ import threading
 import queue
 import logging
 import json
+import time
 
 from engine.logger import empty_get_logger, empty_setup_logging, setup_logging
 from engine.utils import Utils
@@ -133,6 +134,10 @@ class Framework:
             DEF_CMD.EXIT: exit,
         }
         return func_dict[func_name]
+
+    def run(self):
+        while not self.event_shutdown.is_set():
+            time.sleep(0.1)
 
 
 framework = Framework()

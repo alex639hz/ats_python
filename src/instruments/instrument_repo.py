@@ -44,5 +44,13 @@ class InstrumentRepo:
             res.append(instrument_instance.api_std_idn())
         return res
 
+    @staticmethod
+    def is_instance_of_or_throw(instrument: Instrument, instance: Any) -> bool:
+        if not isinstance(instrument, instance):
+            raise Exception(
+                f"incorrect instrument type: {instrument._label} is not an instance of {instance.__name__}"
+            )
+        return True
+
 
 repository = InstrumentRepo()

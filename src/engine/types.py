@@ -7,14 +7,19 @@ from instruments.types.instrument_power_supply import PowerSupply
 if TYPE_CHECKING:
     from engine.procedure import Procedure
 
-_REG_ADDRESS = 0
-_BIT_INDEX = 1
+_DEF_REG_ADDRESS = 0
+_DEF_BIT_INDEX = 1
 
-RegisterAddress = NewType("RegisterAddress", int)
-BitIndex = NewType("BitIndex", int)
+RegisterAddress = int
+BitIndex = int
 BitAddress = NewType("BitAddress", Tuple[RegisterAddress, BitIndex])
+BitValue = bool
 
 AnyInstrument: TypeAlias = Scope | Dmm | PowerSupply
+
+
+def extract_bit_address(bit_address: BitAddress) -> Tuple[RegisterAddress, BitIndex]:
+    return bit_address[_DEF_REG_ADDRESS], bit_address[_DEF_BIT_INDEX]
 
 
 class StepInterface(TypedDict):

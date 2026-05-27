@@ -39,8 +39,7 @@ try:
 
         procedure_1 = project.create_procedure_with_builder("test procedure")
         framework.procedure_append(procedure_1)
-        while not framework.event_shutdown.is_set():
-            time.sleep(0.1)
+        framework.run()
 
 except KeyboardInterrupt:
     logger.info(" ---------------------- Main TERMINATED ---------------------- ")

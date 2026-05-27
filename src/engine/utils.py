@@ -23,14 +23,14 @@ class Register:
     def read_register(self):
         return self.value
 
-    def write_bit(self, bit_idx, value):
-        if value:
+    def write_bit(self, bit_idx: BitIndex, bit_value: BitValue):
+        if bit_value:
             self.value |= 1 << bit_idx
         else:
             self.value &= ~(1 << bit_idx)
         return self.value
 
-    def read_bit(self, bit_idx):
+    def read_bit(self, bit_idx: BitIndex):
         return (self.value >> bit_idx) & 1
 
 
@@ -136,7 +136,7 @@ class Utils:
                     offset += 1
 
     @staticmethod
-    def extract_function_interface(step_interface: StepInterface):
+    def extract_step_interface(step_interface: StepInterface):
         procedure = step_interface["procedure"]
         args = step_interface["args"]
         return (procedure, args)

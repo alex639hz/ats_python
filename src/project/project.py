@@ -23,12 +23,13 @@ logger = logging.getLogger("[project]")
 
 
 def create_session(step_interface: StepInterface):
-    procedure, args = Utils.extract_function_interface(step_interface)
+    procedure, args = Utils.extract_step_interface(step_interface)
     procedure.session_create({"test_cases": ["test1", "test2"], **args})
     return DEF_OK
 
 
-def instruments_setup(procedure: Procedure, args={}):
+def instruments_setup(step_interface: StepInterface):
+    procedure, args = Utils.extract_step_interface(step_interface)
     session: dict[str, Any] = procedure.session_get()
     scope: Scope = repository.get_instrument_by_label("scope")
     dmm: Dmm = repository.get_instrument_by_label("dmm")
@@ -51,21 +52,22 @@ def instruments_setup(procedure: Procedure, args={}):
     return DEF_OK
 
 
-def dut_setup(procedure: Procedure, args={}):
-
+def dut_setup(step_interface: StepInterface):
+    procedure, args = Utils.extract_step_interface(step_interface)
     session = procedure.session_get()
     dut = Dut()
-    dut.register_write(dut.map.REG1, 0x01)
+    dut.register_write(dut.REG1, 0xAA)
+    dut.register_write(dut.REG2, 0xBB)
     dut.bit_write(
-        dut.map.BIT0,
-        True,
+        dut.BIT0,
+        dut.BIT_ON,
     )
     session["dut"] = dut
     procedure.session_set(session)
     return DEF_OK
 
 
-def measurement_start(procedure: Procedure, args={}):
+def measurement_start(step_interface: StepInterface):
 
     scope: Scope = repository.get_by_label("scope")
     scope.stream_waveform_data_to_file_demo("waveform.bin")
@@ -75,7 +77,7 @@ def measurement_start(procedure: Procedure, args={}):
 
 def my_worker(step_interface: StepInterface):
     """demonstrate a worker running in a separate thread."""
-    procedure, args = Utils.extract_function_interface(step_interface)
+    procedure, args = Utils.extract_step_interface(step_interface)
 
     # simulate some work
     for i in range(10):
@@ -89,7 +91,7 @@ def my_worker(step_interface: StepInterface):
     return None
 
 
-def report(procedure: Procedure, args={}):
+def report(step_interface: StepInterface):
     return DEF_OK
 
 
