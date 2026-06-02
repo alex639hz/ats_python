@@ -110,7 +110,7 @@ class Framework:
             return "procedure appended OK"
 
         def exit(args={}):
-            self.logger.info("exit app")
+            # self.logger.info("exit app")
             self.log_listener.stop()
             self.event_shutdown.set()
             return DEF_OK

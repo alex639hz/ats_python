@@ -24,13 +24,34 @@ logger = logging.getLogger("[project]")
 
 def create_session(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    procedure.session_create({"test_cases": ["test1", "test2"], **args})
+    test_cases = ["test1", "test2"]
+    test_count = len(test_cases)
+    index: int | None = procedure.session_var_get("index")
+
+    if index == None:
+        index = 0
+        procedure.session_create({"test_cases": test_cases, **args})
+    else:
+        index += 1
+
+    if not test_count:
+        return "no test cases"
+
+    if index >= test_count:
+        # set nextstate as exit with msg "completed"
+        return "test session completed"
+
+    test_case = test_cases[index]
+    procedure.session_var_set("test_case", test_case)
+    procedure.session_var_set("index", index)
+    procedure.session_db_update()
+
     return DEF_OK
 
 
 def instruments_setup(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    session: dict[str, Any] = procedure.session_get()
+    session: dict[str, Any] = procedure.session_var_get("session") or {}
     scope: Scope = repository.get_instrument_by_label("scope")
     dmm: Dmm = repository.get_instrument_by_label("dmm")
     ps: PowerSupply = repository.get_instrument_by_label("ps")
@@ -80,7 +101,7 @@ def my_worker(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
 
     # simulate some work
-    for i in range(10):
+    for i in range(3):
         time.sleep(0.5)
         logger.info(f"worker stage: {i} {args}")
     try:
@@ -100,14 +121,18 @@ def create_procedure_with_builder(label) -> Procedure:
 
     template = ProcedureBuilder(label)
 
-    template.add_step_worker_start("my_worker", my_worker, {"hello": "world"})
-    template.add_step_worker_wait("my_worker")
-    # template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
+    # template.add_step_worker_start("my_worker1", my_worker, {"hello": "world"})
+    # template.add_step_worker_start("my_worker2", my_worker, {"hello": "world"})
+    # template.add_step_worker_start("my_worker3", my_worker, {"hello": "world"})
+    # template.add_step_worker_wait("my_worker1")
+    # template.add_step_worker_wait("my_worker2")
+    # template.add_step_worker_wait("my_worker3")
+    template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
     # template.add_step_function(instruments_setup, NOARG, "setup_instruments")
     # template.add_step_function(dut_setup, NOARG, "setup_dut")
     # template.add_step_function(measurement_start, NOARG, "start_measure")
     # template.add_step_function(report, NOARG, "report")
-    # template.add_step_exit()
+    template.add_step_exit()
 
     procedure = template.generate_procedure()
 

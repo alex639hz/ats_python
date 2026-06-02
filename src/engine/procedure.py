@@ -21,15 +21,16 @@ class Procedure:
         self._steps: list["Step"] = []
         self._vars = {}
         self._session: dict[str, Any] = {}
+        self._session_id = ""
         self._index = 0
         self._is_running = False
         self._is_first_run = True
         self._nextstate = self.init_nextstate()
-        self._database: Db
+        self._db: Db
         self._framework: Framework
 
     def db_set(self, database: Db):
-        self._database = database
+        self._db = database
         return self
 
     def framework_set(self, fw: Framework):
@@ -48,20 +49,20 @@ class Procedure:
         }
 
         if insert_db:
-            res = self._database.insert_one("session", session)
-            session["_id"] = res.inserted_id
+            res = self._db.insert_one("session", session)
+            self._session_id = res.inserted_id
 
         self._session = session
 
         return session
 
-    def session_db_set(self, session_args: dict[str, Any] = {}):
-        if session_args["_id"]:
-            res = self._database.update_one(
-                "session", {"_id": session_args["_id"]}, {"$set": session_args}
-            )
-        else:
-            res = self._database.insert_one("session", session_args)
+    def session_db_update(self):
+        _id = self._session_id
+        session = self._session
+        if not _id:
+            raise Exception("session_id is not set, cannot update session in db")
+
+        res = self._db.update_one("session", {"_id": _id}, {**session})
 
         return res
 
@@ -69,7 +70,7 @@ class Procedure:
         """Sets the session data for the procedure."""
         self._session = session_data
         if include_db:
-            self.session_db_set(session_data)
+            self.session_db_update()
 
     def session_get(self):
         return self._session
