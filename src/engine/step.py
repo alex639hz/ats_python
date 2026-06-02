@@ -1,6 +1,6 @@
 import sys
 from time import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from engine.constants import *
 from engine.utils import *
@@ -11,10 +11,10 @@ if TYPE_CHECKING:
 
 class Step:
     def __init__(self, op, args, label, step_function):
-        self.label = label or "NA"
+        self.label = label
         self.op: STEP = op
         self.args = args
-        self.func = step_function
+        self.func: Callable[..., str] = step_function
         self.logger = logging.getLogger("[STEP]")
 
     def execute(self, procedure: Procedure):

@@ -1,6 +1,7 @@
 from datetime import datetime
 from time import time
 from typing import TYPE_CHECKING
+import logging
 
 
 from engine.constants import *
@@ -28,6 +29,7 @@ class Procedure:
         self._nextstate = self.init_nextstate()
         self._db: Db
         self._framework: Framework
+        self.logger = logging.getLogger("[procedure]")
 
     def db_set(self, database: Db):
         self._db = database
@@ -80,7 +82,7 @@ class Procedure:
         self._session[var_name] = var_value
         return self
 
-    def session_var_get(self, var_name):
+    def session_var_get(self, var_name) -> Any:
         return self._session.get(var_name)
 
     def get_worker_from_active_step(self) -> Worker:
@@ -94,10 +96,16 @@ class Procedure:
             raise Exception(f"missing worker in active step")
         return worker
 
-    def execution_processor(self):
+    def execution_processor(self, framework: Framework):
         step = self.get_active_step()
         self.nextstate_next()  # Default nextstate is next, can be changed by step function
-        res = step.func(self)
+        try:
+            res = step.func(self)
+        except Exception as e:
+            msg = f"step exception: {step.get_label() or step.func.__name__} {e}"
+            self.nextstate_exit(msg)
+            return
+
         if res:
             step.log(self, res)
         return
@@ -193,6 +201,10 @@ class Procedure:
 
     def nextstate_stop(self):
         self._is_running = False
+
+    def nextstate_exit(self, msg=""):
+        self._framework.logger.info(f"exit by '{self.get_label()}' {msg}")
+        self._framework.call_shutdown()
 
     def increase_index(self):
         self._index += 1

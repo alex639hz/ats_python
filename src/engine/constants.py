@@ -88,6 +88,7 @@ class DEF_NEXTSTATE_OP(Enum):
     ERROR = "ERROR"  # enter error state TODO define
     PAUSE = "PAUSE"  # pause procedure - set should_run to false
     PLAY = "PLAY"  # continue to execute procedure - set should_run to true
+    EXIT = "EXIT"  # exit procedure - set should_run to true
 
 
 class VisaCommandReturnType(Enum):

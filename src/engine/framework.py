@@ -13,15 +13,16 @@ from engine.db import database
 from instruments.instrument_repo import repository
 from instruments.instrument_factory import instrument_factory
 
-DEF_ENG_INTERVAL_SECONDS = 0.01
+DEF_ENG_INTERVAL_SECONDS = 0.001
 DEF_Q_SIZE = 1_000_000
+
+USE_JSON_INSTRUMENT = False
+USE_LOGGING = True
 
 
 class Framework:
     def __init__(
         self,
-        use_json_instrument=True,
-        use_logging=True,
     ):
         # self.instruments_repo = self.repository
         self.q_eng: queue.Queue = queue.Queue(DEF_Q_SIZE)
@@ -31,14 +32,14 @@ class Framework:
         self.procedure_dict: dict[str, int] = {}
         self.database = database
 
-        if use_logging:
+        if USE_LOGGING:
             self.log_listener = setup_logging(self.q_log)
             self.logger = logging.getLogger("[framework]")
         else:
             self.log_listener = empty_setup_logging()
             self.logger = empty_get_logger()
 
-        if use_json_instrument:
+        if USE_JSON_INSTRUMENT:
             BASE_DIR = Path(__file__).resolve().parent / ".."
             path = BASE_DIR / "project" / "instruments.json"
             self.q_eng_add_element(DEF_CMD.INIT_INSTRUMENTS_FROM_JSON, {"path": path})
@@ -71,7 +72,7 @@ class Framework:
         return
 
     def procedure_processor(self, procedure: Procedure):
-        procedure.execution_processor()
+        procedure.execution_processor(self)
         procedure.nextstate_processor()
 
     def q_eng_add_element(self, element: DEF_CMD, args=None):

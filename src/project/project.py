@@ -51,7 +51,6 @@ def create_session(step_interface: StepInterface):
 
 def instruments_setup(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    session: dict[str, Any] = procedure.session_var_get("session") or {}
     scope: Scope = repository.get_instrument_by_label("scope")
     dmm: Dmm = repository.get_instrument_by_label("dmm")
     ps: PowerSupply = repository.get_instrument_by_label("ps")
@@ -88,6 +87,18 @@ def dut_setup(step_interface: StepInterface):
     return DEF_OK
 
 
+def dut_verify(step_interface: StepInterface):
+    procedure, args = Utils.extract_step_interface(step_interface)
+    dut: Dut = procedure.session_var_get("dut")
+    dmm: Dmm = repository.get_instrument_by_label("dmm")
+    reg1_val = dut.register_read(dut.REG1)
+
+    # if True:
+    procedure.nextstate_exit("#### COMPLETED")
+
+    return DEF_OK
+
+
 def measurement_start(step_interface: StepInterface):
 
     scope: Scope = repository.get_by_label("scope")
@@ -116,6 +127,20 @@ def report(step_interface: StepInterface):
     return DEF_OK
 
 
+# create test procedure by using test builder (preset mechanism)
+def create_procedure_with_preset() -> Procedure:
+
+    test = TestBuilderPowerSupply()
+    test.step_init_test(create_session)
+    test.step_setup_inst(instruments_setup)
+    test.step_dut_setup(dut_setup)
+    test.step_start_measurement(measurement_start)
+    test.step_generate_report(report)
+    procedure = test.build("power supply test")
+
+    return procedure
+
+
 # create test procedure by adding steps one by one
 def create_procedure_with_builder(label) -> Procedure:
 
@@ -127,27 +152,14 @@ def create_procedure_with_builder(label) -> Procedure:
     # template.add_step_worker_wait("my_worker1")
     # template.add_step_worker_wait("my_worker2")
     # template.add_step_worker_wait("my_worker3")
-    template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
-    # template.add_step_function(instruments_setup, NOARG, "setup_instruments")
-    # template.add_step_function(dut_setup, NOARG, "setup_dut")
+    # template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
+    # template.add_step_function(instruments_setup, NOARG, "")
+    # template.add_step_function(dut_setup, NOARG, "dut_setup")
+    # template.add_step_function(dut_verify, NOARG, "dut_verify")
     # template.add_step_function(measurement_start, NOARG, "start_measure")
     # template.add_step_function(report, NOARG, "report")
     template.add_step_exit()
 
     procedure = template.generate_procedure()
-
-    return procedure
-
-
-# create test procedure by using test builder (preset mechanism)
-def create_procedure_with_preset() -> Procedure:
-
-    test = TestBuilderPowerSupply()
-    test.step_init_test(create_session)
-    test.step_setup_inst(instruments_setup)
-    test.step_dut_setup(dut_setup)
-    test.step_start_measurement(measurement_start)
-    test.step_generate_report(report)
-    procedure = test.build("power supply test")
 
     return procedure
