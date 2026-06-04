@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import logging
 
 
+from engine.Session import Session
 from engine.constants import *
 from engine.utils import *
 from engine.step import Step
@@ -18,72 +19,26 @@ if TYPE_CHECKING:
 class Procedure:
 
     def __init__(self, label):
+        # private initialized by constructor
         self._label: str = label
+
+        # private uninitialized by constructor
         self._steps: list["Step"] = []
-        self._vars = {}
-        self._session: dict[str, Any] = {}
-        self._session_id = ""
         self._index = 0
         self._is_running = False
         self._is_first_run = True
-        self._nextstate = self.init_nextstate()
-        self._db: Db
-        self._framework: Framework
-        self.logger = logging.getLogger("[procedure]")
+        self._nextstate = self.nextstate_init()
+        self._logger = logging.getLogger("[procedure]")
 
-    def db_set(self, database: Db):
-        self._db = database
+        # public
+        self.session = Session(self)
+        self.framework: Framework
+        self.db: Db
+
+    def framework_set(self, framework: Framework):
+        self.framework = framework
+        self.db = framework.db
         return self
-
-    def framework_set(self, fw: Framework):
-        self._framework = fw
-        return self
-
-    def session_create(self, session_args: dict[str, Any] = {}, insert_db=True):
-        """Creates a session for the procedure.
-        The session dictionary stored in the procedure instance and used as data store during procedure execution.
-        The session can be stored in the database if insert_db is True.
-        """
-        session = {
-            "created_at": datetime.now(),
-            "procedure_label": self.get_label(),
-            **session_args,
-        }
-
-        if insert_db:
-            res = self._db.insert_one("session", session)
-            self._session_id = res.inserted_id
-
-        self._session = session
-
-        return session
-
-    def session_db_update(self):
-        _id = self._session_id
-        session = self._session
-        if not _id:
-            raise Exception("session_id is not set, cannot update session in db")
-
-        res = self._db.update_one("session", {"_id": _id}, {**session})
-
-        return res
-
-    def session_set(self, session_data={}, include_db=False):
-        """Sets the session data for the procedure."""
-        self._session = session_data
-        if include_db:
-            self.session_db_update()
-
-    def session_get(self):
-        return self._session
-
-    def session_var_set(self, var_name, var_value):
-        """Sets the session data for the procedure."""
-        self._session[var_name] = var_value
-        return self
-
-    def session_var_get(self, var_name) -> Any:
-        return self._session.get(var_name)
 
     def get_worker_from_active_step(self) -> Worker:
         """return worker reference from procedure session. This function valid ONLY for WORKER_START step"""
@@ -91,14 +46,14 @@ class Procedure:
         worker_name = step_args.get(STEP_ARG.TITLE)  # [STEP_ARG.TITLE]
         if not worker_name:
             raise Exception(f"missing worker in active step")
-        worker: Worker | None = self.session_var_get(worker_name)
+        worker: Worker | None = self.session.attribute_get(worker_name)
         if not worker:
             raise Exception(f"missing worker in active step")
         return worker
 
     def execution_processor(self, framework: Framework):
         step = self.get_active_step()
-        self.nextstate_next()  # Default nextstate is next, can be changed by step function
+        self.nextstate_next()  # Default
         try:
             res = step.func(self)
         except Exception as e:
@@ -109,13 +64,6 @@ class Procedure:
         if res:
             step.log(self, res)
         return
-
-    def set_variable(self, key, value):
-        self._vars[key] = value
-        return self
-
-    def get_variable(self, key):
-        return self._vars.get(key)
 
     def step_append(self, step: Step):
         self._steps.append(step)
@@ -162,11 +110,10 @@ class Procedure:
         nextstate_op = self._nextstate[0]
         nextstate_idx = self._nextstate[1]
         is_index_range_ok = self._index < final_index
-        is_index_range_error = self._index >= final_index
 
         if nextstate_op == DEF_NEXTSTATE_OP.NEXT and is_index_range_ok:
             self.increase_index()
-        elif nextstate_op == DEF_NEXTSTATE_OP.NEXT and is_index_range_error:
+        elif nextstate_op == DEF_NEXTSTATE_OP.NEXT and not is_index_range_ok:
             self.stop()
         elif nextstate_op == DEF_NEXTSTATE_OP.STAY:
             pass
@@ -179,11 +126,11 @@ class Procedure:
         else:
             raise Exception(f"Undefined nextstate_op: {nextstate_op}")
 
-        self.init_nextstate()
+        self.nextstate_init()
 
         return self
 
-    def init_nextstate(self):
+    def nextstate_init(self):
         self._nextstate = (DEF_NEXTSTATE_OP.PAUSE, 0)
         return self._nextstate
 
@@ -203,8 +150,8 @@ class Procedure:
         self._is_running = False
 
     def nextstate_exit(self, msg=""):
-        self._framework.logger.info(f"exit by '{self.get_label()}' {msg}")
-        self._framework.call_shutdown()
+        # self.framework.logger.info(f"exit by '{self.get_label()}' {msg}")
+        self.framework.call_shutdown()
 
     def increase_index(self):
         self._index += 1

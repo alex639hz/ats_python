@@ -26,11 +26,11 @@ def create_session(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
     test_cases = ["test1", "test2"]
     test_count = len(test_cases)
-    index: int | None = procedure.session_var_get("index")
+    index: int | None = procedure.session.attribute_get("index")
 
     if index == None:
         index = 0
-        procedure.session_create({"test_cases": test_cases, **args})
+        procedure.session.create({"test_cases": test_cases, **args})
     else:
         index += 1
 
@@ -42,9 +42,9 @@ def create_session(step_interface: StepInterface):
         return "test session completed"
 
     test_case = test_cases[index]
-    procedure.session_var_set("test_case", test_case)
-    procedure.session_var_set("index", index)
-    procedure.session_db_update()
+    procedure.session.attribute_set("test_case", test_case)
+    procedure.session.attribute_set("index", index)
+    procedure.session.db_update()
 
     return DEF_OK
 
@@ -74,7 +74,6 @@ def instruments_setup(step_interface: StepInterface):
 
 def dut_setup(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    session = procedure.session_get()
     dut = Dut()
     dut.register_write(dut.REG1, 0xAA)
     dut.register_write(dut.REG2, 0xBB)
@@ -82,19 +81,18 @@ def dut_setup(step_interface: StepInterface):
         dut.BIT0,
         dut.BIT_ON,
     )
-    session["dut"] = dut
-    procedure.session_set(session)
+    procedure.session.attribute_set("dut", dut)
     return DEF_OK
 
 
 def dut_verify(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    dut: Dut = procedure.session_var_get("dut")
+    dut: Dut = procedure.session.attribute_get("dut")
     dmm: Dmm = repository.get_instrument_by_label("dmm")
     reg1_val = dut.register_read(dut.REG1)
 
     # if True:
-    procedure.nextstate_exit("#### COMPLETED")
+    procedure.nextstate_exit()
 
     return DEF_OK
 
@@ -146,19 +144,19 @@ def create_procedure_with_builder(label) -> Procedure:
 
     template = ProcedureBuilder(label)
 
-    # template.add_step_worker_start("my_worker1", my_worker, {"hello": "world"})
-    # template.add_step_worker_start("my_worker2", my_worker, {"hello": "world"})
-    # template.add_step_worker_start("my_worker3", my_worker, {"hello": "world"})
-    # template.add_step_worker_wait("my_worker1")
-    # template.add_step_worker_wait("my_worker2")
-    # template.add_step_worker_wait("my_worker3")
-    # template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
-    # template.add_step_function(instruments_setup, NOARG, "")
-    # template.add_step_function(dut_setup, NOARG, "dut_setup")
-    # template.add_step_function(dut_verify, NOARG, "dut_verify")
-    # template.add_step_function(measurement_start, NOARG, "start_measure")
-    # template.add_step_function(report, NOARG, "report")
-    template.add_step_exit()
+    template.add_step_worker_start("my_worker1", my_worker, {"hello": "world"})
+    template.add_step_worker_start("my_worker2", my_worker, {"hello": "world"})
+    template.add_step_worker_start("my_worker3", my_worker, {"hello": "world"})
+    template.add_step_worker_wait("my_worker1")
+    template.add_step_worker_wait("my_worker2")
+    template.add_step_worker_wait("my_worker3")
+    template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
+    template.add_step_function(instruments_setup, NOARG, "")
+    template.add_step_function(dut_setup, NOARG, "dut_setup")
+    template.add_step_function(dut_verify, NOARG, "dut_verify")
+    template.add_step_function(measurement_start, NOARG, "start_measure")
+    template.add_step_function(report, NOARG, "report")
+    template.add_step_exit("SESSION COMPLETED")
 
     procedure = template.generate_procedure()
 

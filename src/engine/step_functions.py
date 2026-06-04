@@ -18,7 +18,7 @@ def null(procedure: Procedure):
 
 
 def exit(procedure: Procedure):
-    procedure._framework.call_shutdown()
+    procedure.framework.call_shutdown()
     return DEF_OK
 
 
@@ -41,13 +41,13 @@ def function_call(procedure: Procedure):
 
 def delay_start(procedure: Procedure):
     now = time.monotonic()
-    procedure.set_variable(DEF_PROC_PARAM.TIMESTAMP, now)
+    procedure.session.attribute_set(DEF_PROC_PARAM.TIMESTAMP, now)
     return DEF_OK
 
 
 def delay_check(procedure: Procedure):
     now = time.monotonic()
-    start_time = procedure.get_variable(DEF_PROC_PARAM.TIMESTAMP)
+    start_time = procedure.session.attribute_get(DEF_PROC_PARAM.TIMESTAMP)
     delta = now - start_time
     step_args = procedure.get_active_step().get_args()
     target = step_args[STEP_ARG.DURATION_SECONDS]
@@ -68,7 +68,7 @@ def worker_start(procedure: Procedure):
     thread_name = step_args[STEP_ARG.TITLE]
 
     worker = Worker(procedure, function, args, thread_name)
-    procedure.session_var_set(thread_name, worker)
+    procedure.session.attribute_set(thread_name, worker)
     worker.start()
 
     return f"worker start: {thread_name}"

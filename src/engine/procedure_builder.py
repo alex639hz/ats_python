@@ -36,8 +36,8 @@ class ProcedureBuilder:
     def add_step_null(self, label):
         self.append_step(STEP.NULL, NOARG, label)
 
-    def add_step_exit(self, label="exit"):
-        self.append_step(STEP.EXIT, NOARG, label)
+    def add_step_exit(self, msg=""):
+        self.append_step(STEP.EXIT, NOARG, msg)
 
     def add_step_function(self, function, args, label):
         step_args = {

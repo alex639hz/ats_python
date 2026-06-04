@@ -8,7 +8,7 @@ import time
 from engine.logger import empty_get_logger, empty_setup_logging, setup_logging
 from engine.utils import Utils
 from engine.constants import *
-from engine.procedure import Procedure
+from engine.procedure import Procedure, Session
 from engine.db import database
 from instruments.instrument_repo import repository
 from instruments.instrument_factory import instrument_factory
@@ -16,7 +16,7 @@ from instruments.instrument_factory import instrument_factory
 DEF_ENG_INTERVAL_SECONDS = 0.001
 DEF_Q_SIZE = 1_000_000
 
-USE_JSON_INSTRUMENT = False
+USE_JSON_INSTRUMENT = True
 USE_LOGGING = True
 
 
@@ -30,7 +30,9 @@ class Framework:
         self.event_shutdown = threading.Event()
         self.procedure_list: list["Procedure"] = []
         self.procedure_dict: dict[str, int] = {}
-        self.database = database
+
+        self.session: Session = Session(self)
+        self.db = database
 
         if USE_LOGGING:
             self.log_listener = setup_logging(self.q_log)
@@ -46,6 +48,9 @@ class Framework:
 
         self.engine_thread = Utils.thread_define("engineThread", self.thread_method)
         self.engine_thread.start()
+
+    def get_label(self):
+        return "framework 0.0.1"
 
     def thread_method(self):
         while not self.event_shutdown.is_set():
@@ -79,6 +84,7 @@ class Framework:
         self.q_eng.put(Utils.q_element_create(element.value, args))
 
     def call_shutdown(self):
+        self.logger.info("framework shutdown")
         self.q_eng_add_element(DEF_CMD.EXIT)
 
     def log(self, command, res):
@@ -95,24 +101,24 @@ class Framework:
         def func(args):
             pass
 
-        def procedure_append(args={}):
+        def add_new_procedure(args={}):
             procedure: Procedure = args["procedure"]
             procedure_label = procedure.get_label()
             is_exist = self.procedure_dict.get(procedure_label)
-            if is_exist is not None:
+            if is_exist != None:
                 raise Exception(
                     f"Procedure with label '{procedure_label}' already exists."
                 )
-            procedure.db_set(self.database)
             procedure.framework_set(self)
             self.procedure_list.append(procedure)
             index = len(self.procedure_list) - 1
             self.procedure_dict[procedure_label] = index
-            return "procedure appended OK"
+            return DEF_OK
 
         def exit(args={}):
-            # self.logger.info("exit app")
+            # self.logger.info("framework shutdown")
             self.log_listener.stop()
+            self.log_listener
             self.event_shutdown.set()
             return DEF_OK
 
@@ -131,7 +137,7 @@ class Framework:
             DEF_CMD.INIT_INSTRUMENTS_FROM_JSON: load_instruments_json,
             DEF_CMD.PROCEDURE_PLAY: func,
             DEF_CMD.PROCEDURE_PAUSE: func,
-            DEF_CMD.PROCEDURE_APPEND: procedure_append,
+            DEF_CMD.PROCEDURE_APPEND: add_new_procedure,
             DEF_CMD.EXIT: exit,
         }
         return func_dict[func_name]
