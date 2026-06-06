@@ -95,7 +95,7 @@ class Procedure:
             f"Step with label {label} not found in procedure {self.get_label()}"
         )
 
-    def get_run(self):
+    def is_running(self):
         return self._is_running
 
     def start(self):

@@ -71,7 +71,7 @@ class Framework:
 
     def procedure_loop(self):
         for procedure in self.procedure_list:
-            should_run = procedure._is_running
+            should_run = procedure.is_running()
             self.procedure_processor(procedure) if should_run else None
 
         return
@@ -83,7 +83,7 @@ class Framework:
         self.q_eng.put(Utils.q_element_create(element.value, args))
 
     def call_shutdown(self):
-        self.logger.info("framework shutdown")
+        # self.logger.info("framework shutdown")
         self.q_eng_add_element(DEF_CMD.EXIT)
 
     def log(self, command, res):
