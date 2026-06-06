@@ -63,6 +63,8 @@ class Procedure:
 
         if res:
             step.log(self, res)
+
+        self.nextstate_processor()
         return
 
     def step_append(self, step: Step):
@@ -108,7 +110,9 @@ class Procedure:
 
         final_index = self.steps_count() - 1
         nextstate_op = self._nextstate[0]
-        nextstate_idx = self._nextstate[1]
+        payload = self._nextstate[1]
+
+        # nextstate_idx = payload
         is_index_range_ok = self._index < final_index
 
         if nextstate_op == DEF_NEXTSTATE_OP.NEXT and is_index_range_ok:
@@ -118,9 +122,12 @@ class Procedure:
         elif nextstate_op == DEF_NEXTSTATE_OP.STAY:
             pass
         elif nextstate_op == DEF_NEXTSTATE_OP.PAUSE:
-            self.increase_index().stop()
+            self.stop()
         elif nextstate_op == DEF_NEXTSTATE_OP.JUMP:
-            self._index = nextstate_idx
+            if not isinstance(payload, int):
+                raise Exception(f"invalid payload for JUMP: {payload}")
+            self._index = payload
+
         elif nextstate_op == DEF_NEXTSTATE_OP.ERROR:
             pass
         else:
@@ -131,7 +138,7 @@ class Procedure:
         return self
 
     def nextstate_init(self):
-        self._nextstate = (DEF_NEXTSTATE_OP.PAUSE, 0)
+        self._nextstate = (DEF_NEXTSTATE_OP.PAUSE, None)
         return self._nextstate
 
     def nextstate_set(self, nextstate_op: DEF_NEXTSTATE_OP, idx=0):

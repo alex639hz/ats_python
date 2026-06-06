@@ -63,9 +63,10 @@ class ProcedureBuilder:
         }
         self.append_step(STEP.WORKER_START, step_args, label)
 
-    def add_step_worker_wait(self, thread_name, label=None):
+    def add_step_worker_wait(self, thread_name, timeout, label=None):
         step_args = {
             STEP_ARG.TITLE: thread_name,
+            STEP_ARG.DURATION_SECONDS: timeout,
         }
         self.append_step(
             STEP.WORKER_WAIT,

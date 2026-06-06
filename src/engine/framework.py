@@ -78,7 +78,6 @@ class Framework:
 
     def procedure_processor(self, procedure: Procedure):
         procedure.execution_processor(self)
-        procedure.nextstate_processor()
 
     def q_eng_add_element(self, element: DEF_CMD, args=None):
         self.q_eng.put(Utils.q_element_create(element.value, args))
