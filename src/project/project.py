@@ -147,7 +147,7 @@ def create_procedure_with_builder(label) -> Procedure:
     # template.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
     # template.add_step_worker_start("my_worker2", my_worker, {"22": "world"})
     # template.add_step_worker_start("my_worker3", my_worker, {"33": "world"})
-    # template.add_step_worker_wait(10, "my_worker1")
+    template.add_step_worker_wait(10, "my_worker1")
     # template.add_step_worker_wait(10, "my_worker2")
     # template.add_step_worker_wait(10, "my_worker3")
     template.add_step_function(create_session, {"hello22": "world33"}, "create_session")

@@ -340,7 +340,7 @@ class Instrument:
         thread = Utils.thread_define(f"Virtual_{self._label}", start_virtual_instrument)
         thread.start()
 
-    def _close(self):
+    def close(self):
         self.connection.close()
 
     @staticmethod

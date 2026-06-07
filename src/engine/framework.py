@@ -130,7 +130,7 @@ class Framework:
             for instrument in json_payload:
                 instrument_factory(instrument)
 
-            return "instruments initialized from json OK"
+            return DEF_OK
 
         func_dict = {
             DEF_CMD.INIT_INSTRUMENTS_FROM_JSON: load_instruments_json,
