@@ -91,16 +91,18 @@ def dut_verify(step_interface: StepInterface):
     dmm: Dmm = repository.get_instrument_by_label("dmm")
     reg1_val = dut.register_read(dut.REG1)
 
-    # if True:
-    procedure.nextstate_exit()
+    ERROR_DEMO = True
+    if ERROR_DEMO:
+        procedure.nextstate_exit("failed dut_verify")
+        return
 
     return DEF_OK
 
 
 def measurement_start(step_interface: StepInterface):
 
-    scope: Scope = repository.get_by_label("scope")
-    scope.stream_waveform_data_to_file_demo("waveform.bin")
+    # scope: Scope = repository.get_by_label("scope")
+    # scope.stream_waveform_data_to_file_demo("waveform.bin")
 
     return DEF_OK
 
@@ -112,7 +114,7 @@ def my_worker(step_interface: StepInterface):
     # simulate some work
     for i in range(3):
         time.sleep(0.5)
-        logger.info(f"worker stage: {i} {args}")
+        logger.info(f"worker stage: {i}")
     try:
         procedure.get_worker_from_active_step().set_complete()
     except:
@@ -144,10 +146,10 @@ def create_procedure_with_builder(label) -> Procedure:
 
     template = ProcedureBuilder(label)
 
-    # template.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
+    template.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
     # template.add_step_worker_start("my_worker2", my_worker, {"22": "world"})
     # template.add_step_worker_start("my_worker3", my_worker, {"33": "world"})
-    template.add_step_worker_wait(10, "my_worker1")
+    template.add_step_worker_wait("my_worker1", 10, "wait_worker1")
     # template.add_step_worker_wait(10, "my_worker2")
     # template.add_step_worker_wait(10, "my_worker3")
     template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
@@ -156,7 +158,7 @@ def create_procedure_with_builder(label) -> Procedure:
     template.add_step_function(dut_verify, NOARG, "dut_verify")
     template.add_step_function(measurement_start, NOARG, "start_measure")
     template.add_step_function(report, NOARG, "report")
-    template.add_step_exit("SESSION COMPLETED")
+    # template.add_step_exit("SESSION COMPLETED")
 
     procedure = template.generate_procedure()
 

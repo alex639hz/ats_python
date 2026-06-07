@@ -157,8 +157,7 @@ class Procedure:
         self._is_running = False
 
     def nextstate_exit(self, msg=""):
-        # self.framework.logger.info(f"exit by '{self.get_label()}' {msg}")
-        self.framework.call_shutdown()
+        self.framework.call_shutdown(msg)
 
     def increase_index(self):
         self._index += 1

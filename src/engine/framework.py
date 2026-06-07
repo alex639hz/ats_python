@@ -18,6 +18,7 @@ DEF_Q_SIZE = 1_000_000
 
 USE_JSON_INSTRUMENT = True
 USE_LOGGING = True
+USE_SERVER = True
 
 
 class Framework:
@@ -82,16 +83,17 @@ class Framework:
     def q_eng_add_element(self, element: DEF_CMD, args=None):
         self.q_eng.put(Utils.q_element_create(element.value, args))
 
-    def call_shutdown(self):
+    def call_shutdown(self, msg=""):
         # self.logger.info("framework shutdown")
+        self.logger.info(f"call_shutdown: {msg}")
         self.q_eng_add_element(DEF_CMD.EXIT)
 
     def log(self, command, res):
         command = DEF_CMD(command).value
         self.logger.info(f"[COMMAND]\t{command} -> {res}")
 
-    def start(self):
-        self.event_shutdown.set()
+    # def start(self):
+    #     self.event_shutdown.set()
 
     def procedure_append(self, procedure: Procedure):
         self.q_eng_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
@@ -144,6 +146,12 @@ class Framework:
     def run(self):
         while not self.event_shutdown.is_set():
             time.sleep(0.1)
+
+    def start_api_server(self):
+        from server.server_main import run_server
+
+        run_server()
+        pass
 
 
 framework = Framework()
