@@ -4,6 +4,7 @@ import queue
 import logging
 import json
 import time
+from typing import Any
 
 from engine.logger import empty_get_logger, empty_setup_logging, setup_logging
 from engine.utils import Utils
@@ -28,8 +29,9 @@ class Framework:
         self.q_eng: queue.Queue = queue.Queue(DEF_Q_SIZE)
         self.q_log: queue.Queue = queue.Queue(DEF_Q_SIZE)
         self.event_shutdown = threading.Event()
-        self.procedure_list: list["Procedure"] = []
-        self.procedure_dict: dict[str, int] = {}
+        self._procedure_list: list["Procedure"] = []
+        self._procedure_dict: dict[str, int] = {}
+        self._procedure_template: dict[str, Any] = {}
 
         self.session: Session = Session(self)
         self.db = database
@@ -71,7 +73,7 @@ class Framework:
         return
 
     def _procedure_loop(self):
-        for procedure in self.procedure_list:
+        for procedure in self._procedure_list:
             should_run = procedure.is_running()
             self._procedure_processor(procedure) if should_run else None
 
@@ -98,6 +100,12 @@ class Framework:
     def procedure_append(self, procedure: Procedure):
         self.q_eng_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
 
+    def procedure_template_append(self, procedure: Procedure):
+        self._procedure_template[procedure.get_label()] = procedure
+
+    def procedure_template_get(self, label: str):
+        return self._procedure_template.get(label)
+
     def _command_handlers(self, func_name: DEF_CMD):
         def func(args):
             pass
@@ -105,15 +113,15 @@ class Framework:
         def add_new_procedure(args={}):
             procedure: Procedure = args["procedure"]
             procedure_label = procedure.get_label()
-            is_exist = self.procedure_dict.get(procedure_label)
+            is_exist = self._procedure_dict.get(procedure_label)
             if is_exist != None:
                 raise Exception(
                     f"Procedure with label '{procedure_label}' already exists."
                 )
             procedure.framework_set(self)
-            self.procedure_list.append(procedure)
-            index = len(self.procedure_list) - 1
-            self.procedure_dict[procedure_label] = index
+            self._procedure_list.append(procedure)
+            index = len(self._procedure_list) - 1
+            self._procedure_dict[procedure_label] = index
             return DEF_OK
 
         def exit(args={}):

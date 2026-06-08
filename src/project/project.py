@@ -21,7 +21,7 @@ LABEL_CREATE_SESSION = "create_session"
 
 def create_session(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    test_cases = ["test1", "test2", "test3"]
+    test_cases = ["test1", "test2", "test3", "test4", "test5"]
     test_count = len(test_cases)
     index: int | None = procedure.session.attribute_get("index")
 
@@ -151,12 +151,13 @@ def create_procedure_with_preset() -> Procedure:
 
 
 # create test procedure by adding steps one by one
-def create_procedure_with_builder(label) -> Procedure:
+def create_procedure_with_builder(label: str) -> Procedure:
     template = ProcedureBuilder(label)
     USE_WORKER = False
     if USE_WORKER:
+        TIMEOUT_IN_SECONDS = 5
         template.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
-        template.add_step_worker_wait("my_worker1", 10, "wait_worker1")
+        template.add_step_worker_wait("my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1")
 
     template.add_step_function(create_session, NOARG, LABEL_CREATE_SESSION)
     template.add_step_function(instruments_setup, NOARG, "")
@@ -165,6 +166,4 @@ def create_procedure_with_builder(label) -> Procedure:
     template.add_step_function(measurement_start, NOARG, "start_measure")
     template.add_step_function(report, NOARG, "report")
     template.add_step_exit("SESSION COMPLETED")
-    procedure = template.generate_procedure()
-
-    return procedure
+    return template.generate_procedure()
