@@ -82,10 +82,10 @@ def worker_wait(procedure: Procedure):
         raise Exception(f"worker '{thread_name}' not found in session")
     elif worker.is_complete():
         procedure.nextstate_next()
-        return f"worker '{thread_name}' completed"
+        return f"{thread_name} completed"
     else:
         procedure.nextstate_stay()
-        return None  # f"worker '{thread_name}' is running"
+        return None
 
 
 #     def loop(procedure):

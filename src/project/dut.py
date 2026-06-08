@@ -7,7 +7,11 @@ class DutRegisterMap(Register):
     """Defines the register map of the DUT, with register addresses and bit positions."""
 
     REG1 = RegisterAddress(0x0001)
+    REG1_SETUP_A = 1
+    REG1_SETUP_B = 3
+    REG1_SETUP_C = 5
     REG2 = RegisterAddress(0x0002)
+    REG2_SETUP_A = 4
 
     BIT0: BitAddress = BitAddress((REG2, 0))
     BIT1: BitAddress = BitAddress((REG2, 1))

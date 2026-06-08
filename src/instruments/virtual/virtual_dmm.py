@@ -14,7 +14,7 @@ class VirtualDmm(VirtualInstrumentBase):
         cmd = cmd.strip().upper()
 
         if cmd == "*IDN?":
-            return b"VIRTUAL,PSU-1000,0001,1.0\n"
+            return b"V-DMM-1.0\n"
 
         if cmd == "*TST?":
             return b"Test OK\n"

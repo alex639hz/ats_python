@@ -28,14 +28,15 @@ class Procedure:
         self._is_running = False
         self._is_first_run = True
         self._nextstate = self.nextstate_init()
-        self._logger = logging.getLogger("[procedure]")
 
         # public
+        self.logger: logging.Logger  # = logging.getLogger("[procedure]")
         self.session = Session(self)
         self.framework: Framework
         self.db: Db
 
     def framework_set(self, framework: Framework):
+        self.logger = framework.logger
         self.framework = framework
         self.db = framework.db
         return self
@@ -71,9 +72,6 @@ class Procedure:
         self._steps.append(step)
         return self
 
-    def steps_count(self):
-        return len(self._steps)
-
     def get_step_by_index(self, index: int) -> Step:
         return self._steps[index]
 
@@ -108,7 +106,7 @@ class Procedure:
 
     def nextstate_processor(self):
 
-        final_index = self.steps_count() - 1
+        final_index = len(self._steps) - 1
         nextstate_op = self._nextstate[0]
         payload = self._nextstate[1]
 
@@ -150,8 +148,16 @@ class Procedure:
     def nextstate_stay(self):
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
 
-    def nextstate_jump(self, idx: int):
-        self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, idx)
+    def nextstate_jump_by_label(self, label: str):
+        for index, step in enumerate(self._steps):
+            index += 1
+            if step.get_label() == label:
+                self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, index)
+                return DEF_OK
+        raise Exception(
+            f"step with label '{label}' not found in procedure '{self.get_label()}'"
+        )
+        # self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, idx)
 
     def nextstate_stop(self):
         self._is_running = False

@@ -18,7 +18,6 @@ DEF_Q_SIZE = 1_000_000
 
 USE_JSON_INSTRUMENT = True
 USE_LOGGING = True
-USE_SERVER = True
 
 
 class Framework:
@@ -38,9 +37,9 @@ class Framework:
         if USE_LOGGING:
             self.log_listener = setup_logging(self.q_log)
             self.logger = logging.getLogger("[framework]")
-        else:
-            self.log_listener = empty_setup_logging()
-            self.logger = empty_get_logger()
+        # else:
+        #     self.log_listener = empty_setup_logging()
+        #     self.logger = empty_get_logger()
 
         if USE_JSON_INSTRUMENT:
             BASE_DIR = Path(__file__).resolve().parent / ".."
@@ -143,9 +142,10 @@ class Framework:
         }
         return func_dict[func_name]
 
-    def run(self):
+    def wait_shutdown(self):
         while not self.event_shutdown.is_set():
-            time.sleep(0.1)
+            # framework.logger.info(f"waiting: {time.monotonic()}")
+            time.sleep(0.5)
 
     def start_api_server(self):
         from server.server_main import run_server

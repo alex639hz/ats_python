@@ -1,7 +1,4 @@
-import logging
-from pathlib import Path
 import time
-from typing import Any
 
 # from engine import utils
 from engine.procedure import Procedure
@@ -19,12 +16,12 @@ from instruments.types.instrument_scope import Scope
 from presets.power_integrity import TestBuilderPowerSupply
 from project.dut import Dut
 
-logger = logging.getLogger("[project]")
+CREATE_SESSION = "create_session"
 
 
 def create_session(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    test_cases = ["test1", "test2"]
+    test_cases = ["test1", "test2", "test3"]
     test_count = len(test_cases)
     index: int | None = procedure.session.attribute_get("index")
 
@@ -75,8 +72,9 @@ def instruments_setup(step_interface: StepInterface):
 def dut_setup(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
     dut = Dut()
-    dut.register_write(dut.REG1, 0xAA)
-    dut.register_write(dut.REG2, 0xBB)
+
+    dut.register_write(dut.REG1, dut.REG1_SETUP_C)
+    dut.register_write(dut.REG2, dut.REG2_SETUP_A)
     dut.bit_write(
         dut.BIT0,
         dut.BIT_ON,
@@ -91,7 +89,7 @@ def dut_verify(step_interface: StepInterface):
     dmm: Dmm = repository.get_instrument_by_label("dmm")
     reg1_val = dut.register_read(dut.REG1)
 
-    ERROR_DEMO = True
+    ERROR_DEMO = False
     if ERROR_DEMO:
         procedure.nextstate_exit("failed dut_verify")
         return
@@ -100,8 +98,10 @@ def dut_verify(step_interface: StepInterface):
 
 
 def measurement_start(step_interface: StepInterface):
-
-    # scope: Scope = repository.get_by_label("scope")
+    procedure, args = Utils.extract_step_interface(step_interface)
+    test_case = procedure.session.attribute_get("test_case")
+    scope: Scope = repository.get_by_label("scope")
+    idn = scope.std_idn()
     # scope.stream_waveform_data_to_file_demo("waveform.bin")
 
     return DEF_OK
@@ -114,7 +114,7 @@ def my_worker(step_interface: StepInterface):
     # simulate some work
     for i in range(3):
         time.sleep(0.5)
-        logger.info(f"worker stage: {i}")
+        procedure.logger.info(f"worker stage: {i}")
     try:
         procedure.get_worker_from_active_step().set_complete()
     except:
@@ -124,6 +124,15 @@ def my_worker(step_interface: StepInterface):
 
 
 def report(step_interface: StepInterface):
+    procedure, args = Utils.extract_step_interface(step_interface)
+    index = procedure.session.attribute_get("index")
+    test_cases = procedure.session.attribute_get("test_cases")
+    next_index = index + 1
+    if next_index < len(test_cases):
+        procedure.session.attribute_set("index", next_index)
+        procedure.nextstate_jump_by_label(CREATE_SESSION)
+        return "jump to next test case"
+
     return DEF_OK
 
 
@@ -143,20 +152,21 @@ def create_procedure_with_preset() -> Procedure:
 
 # create test procedure by adding steps one by one
 def create_procedure_with_builder(label) -> Procedure:
-
     template = ProcedureBuilder(label)
+    USE_WORKER = False
+    if USE_WORKER:
+        template.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
+        template.add_step_worker_wait("my_worker1", 10, "wait_worker1")
 
-    template.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
-    # template.add_step_worker_start("my_worker2", my_worker, {"22": "world"})
-    # template.add_step_worker_start("my_worker3", my_worker, {"33": "world"})
-    template.add_step_worker_wait("my_worker1", 10, "wait_worker1")
-    # template.add_step_worker_wait(10, "my_worker2")
-    # template.add_step_worker_wait(10, "my_worker3")
-    template.add_step_function(create_session, {"hello22": "world33"}, "create_session")
+    template.add_step_function(create_session, NOARG, CREATE_SESSION)
     template.add_step_function(instruments_setup, NOARG, "")
     template.add_step_function(dut_setup, NOARG, "dut_setup")
-    template.add_step_function(dut_verify, NOARG, "dut_verify")
+    USE_DUT_VERITY = False
+    if USE_DUT_VERITY:
+        template.add_step_function(dut_verify, NOARG, "dut_verify")
+
     template.add_step_function(measurement_start, NOARG, "start_measure")
+
     template.add_step_function(report, NOARG, "report")
     # template.add_step_exit("SESSION COMPLETED")
 
