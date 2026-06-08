@@ -42,41 +42,42 @@ class Framework:
         #     self.logger = empty_get_logger()
 
         if USE_JSON_INSTRUMENT:
-            BASE_DIR = Path(__file__).resolve().parent / ".."
-            path = BASE_DIR / "project" / "instruments.json"
-            self.q_eng_add_element(DEF_CMD.INIT_INSTRUMENTS_FROM_JSON, {"path": path})
+            self.q_eng_add_element(
+                DEF_CMD.INIT_INSTRUMENTS_FROM_JSON,
+                {"path": "C:/ats_python/src/project/instruments.json"},
+            )
 
-        self.engine_thread = Utils.thread_define("engineThread", self.thread_method)
+        self.engine_thread = Utils.thread_define("engineThread", self._thread_method)
         self.engine_thread.start()
 
     def get_label(self):
         return "framework 0.0.1"
 
-    def thread_method(self):
+    def _thread_method(self):
         while not self.event_shutdown.is_set():
             try:
                 element = self.q_eng.get(block=True, timeout=DEF_ENG_INTERVAL_SECONDS)
                 command, args = Utils.q_element_get_params(element)
-                self.command_processor(command, args)
+                self._command_processor(command, args)
             except queue.Empty:
                 pass
-            self.procedure_loop()
+            self._procedure_loop()
 
-    def command_processor(self, command, args={}):
+    def _command_processor(self, command, args={}):
         command = DEF_CMD(command)
-        handler = self.command_handlers(command)
+        handler = self._command_handlers(command)
         res = handler(args)
         self.log(command, res)
         return
 
-    def procedure_loop(self):
+    def _procedure_loop(self):
         for procedure in self.procedure_list:
             should_run = procedure.is_running()
-            self.procedure_processor(procedure) if should_run else None
+            self._procedure_processor(procedure) if should_run else None
 
         return
 
-    def procedure_processor(self, procedure: Procedure):
+    def _procedure_processor(self, procedure: Procedure):
         procedure.execution_processor(self)
 
     def q_eng_add_element(self, element: DEF_CMD, args=None):
@@ -97,7 +98,7 @@ class Framework:
     def procedure_append(self, procedure: Procedure):
         self.q_eng_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
 
-    def command_handlers(self, func_name: DEF_CMD):
+    def _command_handlers(self, func_name: DEF_CMD):
         def func(args):
             pass
 
@@ -123,7 +124,7 @@ class Framework:
             return DEF_OK
 
         def load_instruments_json(args={}):
-            path: Path = args["path"]
+            path: Path = Path(args["path"])
             with path.open(encoding="utf-8") as f:
                 json_payload = json.load(f)
 

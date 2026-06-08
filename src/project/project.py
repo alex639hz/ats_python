@@ -16,7 +16,7 @@ from instruments.types.instrument_scope import Scope
 from presets.power_integrity import TestBuilderPowerSupply
 from project.dut import Dut
 
-CREATE_SESSION = "create_session"
+LABEL_CREATE_SESSION = "create_session"
 
 
 def create_session(step_interface: StepInterface):
@@ -130,7 +130,7 @@ def report(step_interface: StepInterface):
     next_index = index + 1
     if next_index < len(test_cases):
         procedure.session.attribute_set("index", next_index)
-        procedure.nextstate_jump_by_label(CREATE_SESSION)
+        procedure.nextstate_jump_by_label(LABEL_CREATE_SESSION)
         return "jump to next test case"
 
     return DEF_OK
@@ -158,18 +158,13 @@ def create_procedure_with_builder(label) -> Procedure:
         template.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
         template.add_step_worker_wait("my_worker1", 10, "wait_worker1")
 
-    template.add_step_function(create_session, NOARG, CREATE_SESSION)
+    template.add_step_function(create_session, NOARG, LABEL_CREATE_SESSION)
     template.add_step_function(instruments_setup, NOARG, "")
     template.add_step_function(dut_setup, NOARG, "dut_setup")
-    USE_DUT_VERITY = False
-    if USE_DUT_VERITY:
-        template.add_step_function(dut_verify, NOARG, "dut_verify")
-
+    template.add_step_function(dut_verify, NOARG, "dut_verify")
     template.add_step_function(measurement_start, NOARG, "start_measure")
-
     template.add_step_function(report, NOARG, "report")
-    # template.add_step_exit("SESSION COMPLETED")
-
+    template.add_step_exit("SESSION COMPLETED")
     procedure = template.generate_procedure()
 
     return procedure

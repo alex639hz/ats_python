@@ -65,15 +65,12 @@ class Procedure:
         if res:
             step.log(self, res)
 
-        self.nextstate_processor()
+        self._nextstate_processor()
         return
 
     def step_append(self, step: Step):
         self._steps.append(step)
         return self
-
-    def get_step_by_index(self, index: int) -> Step:
-        return self._steps[index]
 
     def get_active_step(self) -> Step:
         return self._steps[self._index]
@@ -104,17 +101,15 @@ class Procedure:
         self._is_running = False
         return self
 
-    def nextstate_processor(self):
+    def _nextstate_processor(self):
 
         final_index = len(self._steps) - 1
         nextstate_op = self._nextstate[0]
         payload = self._nextstate[1]
-
-        # nextstate_idx = payload
         is_index_range_ok = self._index < final_index
 
         if nextstate_op == DEF_NEXTSTATE_OP.NEXT and is_index_range_ok:
-            self.increase_index()
+            self._increase_index()
         elif nextstate_op == DEF_NEXTSTATE_OP.NEXT and not is_index_range_ok:
             self.stop()
         elif nextstate_op == DEF_NEXTSTATE_OP.STAY:
@@ -130,8 +125,6 @@ class Procedure:
             pass
         else:
             raise Exception(f"Undefined nextstate_op: {nextstate_op}")
-
-        self.nextstate_init()
 
         return self
 
@@ -165,7 +158,7 @@ class Procedure:
     def nextstate_exit(self, msg=""):
         self.framework.call_shutdown(msg)
 
-    def increase_index(self):
+    def _increase_index(self):
         self._index += 1
         return self
 
