@@ -1,6 +1,7 @@
 import time
 
 # from engine import utils
+from engine import procedure
 from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
 from engine.db import database
@@ -19,29 +20,33 @@ from project.dut import Dut
 LABEL_CREATE_SESSION = "create_session"
 
 
+class Tester(Procedure):
+
+    def __init__(self, procedure: Procedure):
+        self.test_case = procedure.session.attribute_get("test_case")
+
+    def set_session(self, session):
+        self.session._session = session
+
+    def get_label(self) -> str:
+        return "hello tester"
+
+
 def create_session(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    test_cases = ["test1", "test2", "test3", "test4", "test5"]
+    test_cases = ["test1", "test2", "test3"]
     test_count = len(test_cases)
-    index: int | None = procedure.session.attribute_get("index")
-
-    if index == None:
-        index = 0
-        procedure.session.create({"test_cases": test_cases, **args})
-    else:
-        index += 1
 
     if not test_count:
         return "no test cases"
 
-    if index >= test_count:
-        # set nextstate as exit with msg "completed"
-        return "test session completed"
+    procedure.session.create({"test_cases": test_cases, **args})
 
+    index = 0
     test_case = test_cases[index]
-    procedure.session.attribute_set("test_case", test_case)
     procedure.session.attribute_set("index", index)
-    procedure.session.db_update()
+    procedure.session.attribute_set("test_case", test_case)
+    procedure.session.attribute_set("test_cases", test_cases)
 
     return DEF_OK
 
@@ -69,7 +74,7 @@ def instruments_setup(step_interface: StepInterface):
     return DEF_OK
 
 
-def dut_setup(step_interface: StepInterface):
+def dut_setup_start(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
     dut = Dut()
 
@@ -83,7 +88,7 @@ def dut_setup(step_interface: StepInterface):
     return DEF_OK
 
 
-def dut_verify(step_interface: StepInterface):
+def dut_setup_complete(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
     dut: Dut = procedure.session.attribute_get("dut")
     dmm: Dmm = repository.get_instrument_by_label("dmm")
@@ -97,7 +102,15 @@ def dut_verify(step_interface: StepInterface):
     return DEF_OK
 
 
-def measurement_start(step_interface: StepInterface):
+def prepare_test(step_interface: StepInterface):
+    procedure, args = Utils.extract_step_interface(step_interface)
+    # test_case = procedure.session.attribute_get("test_case")
+    tester = Tester(procedure)
+    procedure.session.attribute_set("tester", tester)
+    return DEF_OK
+
+
+def test_dut(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
     test_case = procedure.session.attribute_get("test_case")
     scope: Scope = repository.get_by_label("scope")
@@ -123,14 +136,18 @@ def my_worker(step_interface: StepInterface):
     return None
 
 
-def report(step_interface: StepInterface):
+def complete_session(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
+
+    tester: Tester = procedure.session.attribute_get("tester")
+    procedure.logger.info(f"prepare_test: {tester.get_label()}")
+
     index = procedure.session.attribute_get("index")
     test_cases = procedure.session.attribute_get("test_cases")
     next_index = index + 1
     if next_index < len(test_cases):
         procedure.session.attribute_set("index", next_index)
-        procedure.nextstate_jump_by_label(LABEL_CREATE_SESSION)
+        procedure.nextstate_jump_by_label("prepare_test")
         return "jump to next test case"
 
     return DEF_OK
@@ -142,9 +159,9 @@ def create_procedure_with_preset() -> Procedure:
     test = TestBuilderPowerSupply()
     test.step_init_test(create_session)
     test.step_setup_inst(instruments_setup)
-    test.step_dut_setup(dut_setup)
-    test.step_start_measurement(measurement_start)
-    test.step_generate_report(report)
+    test.step_dut_setup(dut_setup_start)
+    test.step_start_measurement(test_dut)
+    test.step_generate_report(complete_session)
     procedure = test.build("power supply test")
 
     return procedure
@@ -152,18 +169,19 @@ def create_procedure_with_preset() -> Procedure:
 
 # create test procedure by adding steps one by one
 def create_procedure_with_builder(label: str) -> Procedure:
-    template = ProcedureBuilder(label)
+    builder = ProcedureBuilder(label)
     USE_WORKER = False
     if USE_WORKER:
         TIMEOUT_IN_SECONDS = 5
-        template.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
-        template.add_step_worker_wait("my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1")
+        builder.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
+        builder.add_step_worker_wait("my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1")
 
-    template.add_step_function(create_session, NOARG, LABEL_CREATE_SESSION)
-    template.add_step_function(instruments_setup, NOARG, "")
-    template.add_step_function(dut_setup, NOARG, "dut_setup")
-    template.add_step_function(dut_verify, NOARG, "dut_verify")
-    template.add_step_function(measurement_start, NOARG, "start_measure")
-    template.add_step_function(report, NOARG, "report")
-    template.add_step_exit("SESSION COMPLETED")
-    return template.generate_procedure()
+    builder.add_step_function(instruments_setup, NOARG, "")
+    builder.add_step_function(dut_setup_start, NOARG, "dut_setup_start")
+    builder.add_step_function(dut_setup_complete, NOARG, "dut_setup_complete")
+    builder.add_step_function(create_session, NOARG, LABEL_CREATE_SESSION)
+    builder.add_step_function(prepare_test, NOARG, "prepare_test")
+    builder.add_step_function(test_dut, NOARG, "test_dut")
+    builder.add_step_function(complete_session, NOARG, "complete_session")
+    builder.add_step_exit("SESSION COMPLETED")
+    return builder.generate_procedure()

@@ -15,7 +15,6 @@ class Step:
         self.op: STEP = op
         self.args = args
         self.func: Callable[..., str] = step_function
-        self.logger = logging.getLogger("[STEP]")
 
     def execute(self, procedure: Procedure):
         log_msg = self.func(procedure)
@@ -27,7 +26,7 @@ class Step:
     def log(self, procedure: Procedure, msg=""):
         proc_label = procedure.get_label()
         log_msg = f"{proc_label}: {self.op.value}\t{self.label}\t{msg}"
-        self.logger.info(log_msg)
+        procedure.logger.info(log_msg)
         return
 
     def get_arg(self, key):

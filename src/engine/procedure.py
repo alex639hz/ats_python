@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import logging
 
 
-from engine.Session import Session
+from engine.session import Session
 from engine.constants import *
 from engine.utils import *
 from engine.step import Step
@@ -31,6 +31,7 @@ class Procedure:
 
         # public
         self.logger: logging.Logger  # = logging.getLogger("[procedure]")
+        self.collection_name = "session"
         self.session = Session(self)
         self.framework: Framework
         self.db: Db
@@ -55,8 +56,9 @@ class Procedure:
     def execution_processor(self, framework: Framework):
         step = self.get_active_step()
         self.nextstate_next()  # Default
+        res = step.func(self)
         try:
-            res = step.func(self)
+            pass
         except Exception as e:
             msg = f"step exception: {step.get_label() or step.func.__name__} {e}"
             self.nextstate_exit(msg)
@@ -143,7 +145,6 @@ class Procedure:
 
     def nextstate_jump_by_label(self, label: str):
         for index, step in enumerate(self._steps):
-            index += 1
             if step.get_label() == label:
                 self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, index)
                 return DEF_OK

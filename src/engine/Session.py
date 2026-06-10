@@ -1,18 +1,12 @@
 from datetime import datetime
-from time import time
 from typing import TYPE_CHECKING
-import logging
-
 
 from engine.constants import *
 from engine.utils import *
-from engine.step import Step
-from engine.worker import Worker
-
-from engine.db import Db, database
 
 if TYPE_CHECKING:
     from engine.framework import Framework
+
 
 COLLECTION_SESSION = "session"
 
@@ -35,23 +29,46 @@ class Session:
             "owner_label": self.owner.get_label(),
             **session_args,
         }
-
-        if insert_db:
-            res = self.owner.db.insert_one("session", session)
-            self._session_id = res.inserted_id
-
         self._session = session
 
+        self.prepare_session()
+
+        if insert_db:
+            res = self.owner.db.insert_one("session", self._session)
+            self._session_id = res.inserted_id
+
         return session
+
+    def prepare_session(self):
+        from engine.procedure import Procedure
+
+        if isinstance(self.owner, Procedure):
+            res_session = {
+                "created_at": self._session.get("created_at"),
+                "owner_label": self._session.get("owner_label"),
+                "test_cases": self._session.get("test_cases"),
+            }
+        elif isinstance(self.owner, Framework):
+            res_session = {
+                "created_at": self._session.get("created_at"),
+                "owner_label": self._session.get("owner_label"),
+                "test_cases": self._session.get("test_cases"),
+            }
+        else:
+            raise Exception("invalid session owner instance")
+
+        return res_session
 
     def db_update(self):
         _id = self._session_id
 
         if not _id:
-            raise Exception("session_id is not set, cannot update session in db")
+            raise Exception(f"session_id is not set: {self.owner.collection_name}")
+
+        res_session = self.prepare_session()
 
         res = self.owner.db.update_one(
-            COLLECTION_SESSION, {"_id": _id}, {**self._session}
+            self.owner.collection_name, {"_id": _id}, {**res_session}
         )
 
         return res

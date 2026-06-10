@@ -29,8 +29,6 @@ class ProcedureBuilder:
         for step in self.steps:
             procedure.step_append(step)
 
-        procedure.start()
-
         return procedure
 
     def add_step_null(self, label):

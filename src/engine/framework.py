@@ -6,10 +6,11 @@ import json
 import time
 from typing import Any
 
+from engine.session import Session
 from engine.logger import empty_get_logger, empty_setup_logging, setup_logging
 from engine.utils import Utils
 from engine.constants import *
-from engine.procedure import Procedure, Session
+from engine.procedure import Procedure
 from engine.db import database
 from instruments.instrument_repo import repository
 from instruments.instrument_factory import instrument_factory
@@ -31,8 +32,8 @@ class Framework:
         self.event_shutdown = threading.Event()
         self._procedure_list: list["Procedure"] = []
         self._procedure_dict: dict[str, int] = {}
-        self._procedure_template: dict[str, Any] = {}
 
+        self.collection_name = "framework"
         self.session: Session = Session(self)
         self.db = database
 
@@ -68,6 +69,8 @@ class Framework:
     def _command_processor(self, command, args={}):
         command = DEF_CMD(command)
         handler = self._command_handlers(command)
+        if not callable(handler):
+            raise Exception(f"invalid command: {command}")
         res = handler(args)
         self.log(command, res)
         return
@@ -99,12 +102,6 @@ class Framework:
 
     def procedure_append(self, procedure: Procedure):
         self.q_eng_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
-
-    def procedure_template_append(self, procedure: Procedure):
-        self._procedure_template[procedure.get_label()] = procedure
-
-    def procedure_template_get(self, label: str):
-        return self._procedure_template.get(label)
 
     def _command_handlers(self, func_name: DEF_CMD):
         def func(args):
