@@ -20,16 +20,13 @@ from project.dut import Dut
 LABEL_CREATE_SESSION = "create_session"
 
 
-class Tester(Procedure):
+class Tester:
 
     def __init__(self, procedure: Procedure):
-        self.test_case = procedure.session.attribute_get("test_case")
+        self.procedure = procedure
 
-    def set_session(self, session):
-        self.session._session = session
-
-    def get_label(self) -> str:
-        return "hello tester"
+    def get_active_test(self):
+        pass
 
 
 def create_session(step_interface: StepInterface):
