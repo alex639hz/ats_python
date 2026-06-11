@@ -1,3 +1,4 @@
+import json
 import os
 import threading
 import logging
@@ -140,3 +141,10 @@ class Utils:
         procedure = step_interface["procedure"]
         args = step_interface["args"]
         return (procedure, args)
+
+    @staticmethod
+    def read_json(_path):
+        path: Path = Path(_path)
+        with path.open(encoding="utf-8") as f:
+            json_payload = json.load(f)
+        return json_payload

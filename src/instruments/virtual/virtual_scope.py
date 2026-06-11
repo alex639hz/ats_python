@@ -33,6 +33,13 @@ class VirtualScope(VirtualInstrumentBase):
             self.__init__(self._instrument)
             return b"\n"
 
+        elif cmd_u == ":MEAS:VRMS? CHAN1":
+            import random
+
+            number = random.random()
+
+            return (str(1 + number) + "\n").encode()
+
         if cmd_u == "*CLS":
             self._esr_ready_at = None
             return b"\n"

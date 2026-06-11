@@ -90,12 +90,13 @@ class Framework:
 
     def call_shutdown(self, msg=""):
         # self.logger.info("framework shutdown")
-        self.logger.info(f"call_shutdown: {msg}")
+        if len(msg):
+            self.logger.info(f"call_shutdown: {msg}")
         self.q_eng_add_element(DEF_CMD.EXIT)
 
     def log(self, command, res):
         command = DEF_CMD(command).value
-        self.logger.info(f"[COMMAND]\t{command} -> {res}")
+        self.logger.info(f"COMMAND: {command} -> {res}")
 
     # def start(self):
     #     self.event_shutdown.set()

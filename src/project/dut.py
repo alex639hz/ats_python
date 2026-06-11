@@ -6,6 +6,9 @@ from engine.utils import *
 class DutRegisterMap(Register):
     """Defines the register map of the DUT, with register addresses and bit positions."""
 
+    BIT_ON: BitValue = True
+    BIT_OFF: BitValue = False
+
     REG1 = RegisterAddress(0x0001)
     REG1_SETUP_A = 1
     REG1_SETUP_B = 3
@@ -18,9 +21,6 @@ class DutRegisterMap(Register):
 
 
 class Dut(DutRegisterMap):
-
-    BIT_ON: BitValue = True
-    BIT_OFF: BitValue = False
 
     def __init__(self):
         self.reg_store: dict[Any, int] = {}

@@ -6,7 +6,7 @@ from project import project
 
 try:
 
-    procedure = project.create_procedure_with_builder("test procedure")
+    procedure = project.create_procedure_with_builder("my-dut-test")
 
     SHOULD_APPEND_PROCEDURE = True
     if SHOULD_APPEND_PROCEDURE:

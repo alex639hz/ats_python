@@ -1,0 +1,10 @@
+[
+    {
+        "label": "test1",
+        "vrms_max": 1.1
+    },
+    {
+        "label": "test2",
+        "vrms_max": 1.8
+    }
+]

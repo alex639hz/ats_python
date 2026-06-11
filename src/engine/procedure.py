@@ -15,6 +15,8 @@ from engine.db import Db, database
 if TYPE_CHECKING:
     from engine.framework import Framework
 
+SHOULD_LOG_STEP = True
+
 
 class Procedure:
 
@@ -64,7 +66,7 @@ class Procedure:
             self.nextstate_exit(msg)
             return
 
-        if res:
+        if res and SHOULD_LOG_STEP:
             step.log(self, res)
 
         self._nextstate_processor()

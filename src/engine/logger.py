@@ -13,7 +13,10 @@ LOG_LEVEL = logging.INFO
 LOG_MAX_BYTES = 5_000_000
 LOG_BACKUP_COUNT = 3
 
-LOG_FORMAT = "%(asctime)s [%(levelname)s] " "[%(threadName)s] %(name)s: %(message)s"
+LOG_FORMAT_WITH_TAG = (
+    "%(asctime)s [%(levelname)s] " "[%(threadName)s] %(name)s: %(message)s"
+)
+LOG_FORMAT = "%(asctime)s [%(levelname)s] " "[%(threadName)s]: %(message)s"
 
 
 LOG_CONFIG = {

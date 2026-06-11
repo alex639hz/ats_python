@@ -226,9 +226,6 @@ class Scope(Instrument):
         if term not in (b"\n", b"\r"):
             raise WaveformStreamError(f"Expected waveform terminator, got {term!r}")
 
-    def stream_waveform_data_to_file_demo(self, filename):
-        pass
-
     def stream_waveform_data_to_file(
         self,
         bin_filepath: Path,
@@ -412,3 +409,7 @@ class Scope(Instrument):
 
             if leftover:
                 raise ValueError("Corrupted file: odd number of bytes in WORD data")
+
+    def measure_volt_rms(self):
+        volt_rms: float = self.request_float(":MEAS:VRMS? CHAN1")
+        return volt_rms
