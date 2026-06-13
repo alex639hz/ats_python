@@ -33,8 +33,5 @@ class Db:
         res = self.connection[collection].find_one(query)
         return res
 
-    def session_create(self, session={}):
-        self.insert_one("sessions", session)
-
 
 database = Db()

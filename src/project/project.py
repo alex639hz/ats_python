@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 
 # from engine import utils
@@ -26,8 +27,12 @@ class Tester:
 
     def __init__(self, procedure: Procedure, cases):
         self.procedure = procedure
+        self.procedure.context.create({"test_cases": cases})
         self.index = 0
         self.cases = cases
+
+    def initialize(self):
+        self.procedure.context.attribute_set(LABEL_TESTER, self)
 
     def get_active_case(self):
         return self.cases[self.index]
@@ -40,6 +45,14 @@ class Tester:
         is_completed = self.index >= self.count()
         return is_completed
 
+    def get_session(self):
+        res_session = {
+            "created_at": self.procedure.context.attribute_get("created_at"),
+            "owner_label": self.procedure.context.attribute_get("owner_label"),
+            "test_cases": self.procedure.context.attribute_get("test_cases"),
+        }
+        return {}
+
 
 def create_session(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
@@ -51,12 +64,26 @@ def create_session(step_interface: StepInterface):
     if not test_count:
         return "no test cases"
 
-    procedure.session.create({"test_cases": test_cases, **args})
-
     tester = Tester(procedure, test_cases)
-    procedure.session.attribute_set(LABEL_TESTER, tester)
+    tester.initialize()
+    db_session = {
+        "created_at": datetime.now(),
+        "owner_label": procedure.get_label(),
+        "test_cases": test_cases,
+    }
+    res = procedure.db.insert_one("session", db_session)
+    _id = res.inserted_id
+    procedure.context.attribute_set("session_id", _id)
+    return f"{_id} " + DEF_OK
 
-    return DEF_OK
+
+def prepare_test(step_interface: StepInterface):
+    procedure, args = Utils.extract_step_interface(step_interface)
+
+    tester: Tester = procedure.context.attribute_get(LABEL_TESTER)
+    case = tester.get_active_case()
+
+    return f"$ {case} $"
 
 
 def instruments_setup(step_interface: StepInterface):
@@ -93,13 +120,13 @@ def dut_setup_start(step_interface: StepInterface):
         dut.BIT0,
         dut.BIT_ON,
     )
-    procedure.session.attribute_set("dut", dut)
+    procedure.context.attribute_set("dut", dut)
     return DEF_OK
 
 
 def dut_setup_complete(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    dut: Dut = procedure.session.attribute_get("dut")
+    dut: Dut = procedure.context.attribute_get("dut")
     dmm: Dmm = repository.get_instrument_by_label("dmm")
     reg1_val = dut.register_read(dut.REG1)
 
@@ -111,20 +138,11 @@ def dut_setup_complete(step_interface: StepInterface):
     return DEF_OK
 
 
-def prepare_test(step_interface: StepInterface):
-    procedure, args = Utils.extract_step_interface(step_interface)
-
-    tester: Tester = procedure.session.attribute_get(LABEL_TESTER)
-    case = tester.get_active_case()
-
-    return f"$ {case} $"
-
-
 def test_dut(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
-    tester: Tester = procedure.session.attribute_get(LABEL_TESTER)
+    tester: Tester = procedure.context.attribute_get(LABEL_TESTER)
     case = tester.get_active_case()
-    volt_rms_max = case["vrms_max"]
+    volt_rms_max = case["volt_rms_max"]
     scope: Scope = repository.get_by_label("scope")
     volt_rms = scope.measure_volt_rms()
     if volt_rms > volt_rms_max:
@@ -154,7 +172,7 @@ def my_worker(step_interface: StepInterface):
 def complete_test_case(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
 
-    tester: Tester = procedure.session.attribute_get(LABEL_TESTER)
+    tester: Tester = procedure.context.attribute_get(LABEL_TESTER)
     cases_completed = tester.complete_case()
     if not cases_completed:
         procedure.nextstate_jump_by_label(LABEL_PREPARE_TEST)
@@ -187,9 +205,9 @@ def create_procedure_with_builder(label: str) -> Procedure:
         builder.add_step_worker_wait("my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1")
 
     builder.add_step_function(create_session, NOARG, LABEL_CREATE_SESSION)
+    builder.add_step_function(prepare_test, NOARG, LABEL_PREPARE_TEST)
     builder.add_step_function(dut_setup_start, NOARG, "dut_setup_start")
     builder.add_step_function(dut_setup_complete, NOARG, "dut_setup_complete")
-    builder.add_step_function(prepare_test, NOARG, LABEL_PREPARE_TEST)
     builder.add_step_function(instruments_setup, NOARG, "")
     builder.add_step_function(test_dut, NOARG, "test_dut")
     builder.add_step_function(complete_test_case, NOARG, "complete_test_case")

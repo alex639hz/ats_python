@@ -11,10 +11,10 @@ if TYPE_CHECKING:
 COLLECTION_SESSION = "session"
 
 
-class Session:
+class Context:
     def __init__(self, owner: Procedure | Framework):
-        self._session: dict[str, Any] = {}
-        self._session_id = ""
+        self._context: dict[str, Any] = {}
+        self._context_id = ""
 
         self.owner = owner
         pass
@@ -24,35 +24,37 @@ class Session:
         The session dictionary stored in the procedure instance and used as data store during procedure execution.
         The session can be stored in the database if insert_db is True.
         """
-        session = {
+        context = {
             "created_at": datetime.now(),
             "owner_label": self.owner.get_label(),
             **session_args,
         }
-        self._session = session
+        self._context = context
 
-        self.prepare_session()
+        IGNORE_DB = True
+        if not IGNORE_DB:
+            self.prepare_session()
 
-        if insert_db:
-            res = self.owner.db.insert_one("session", self._session)
-            self._session_id = res.inserted_id
+            if insert_db:
+                res = self.owner.db.insert_one("session", self._context)
+                self._context_id = res.inserted_id
 
-        return session
+        return context
 
     def prepare_session(self):
         from engine.procedure import Procedure
 
         if isinstance(self.owner, Procedure):
             res_session = {
-                "created_at": self._session.get("created_at"),
-                "owner_label": self._session.get("owner_label"),
-                "test_cases": self._session.get("test_cases"),
+                "created_at": self._context.get("created_at"),
+                "owner_label": self._context.get("owner_label"),
+                "test_cases": self._context.get("test_cases"),
             }
         elif isinstance(self.owner, Framework):
             res_session = {
-                "created_at": self._session.get("created_at"),
-                "owner_label": self._session.get("owner_label"),
-                "test_cases": self._session.get("test_cases"),
+                "created_at": self._context.get("created_at"),
+                "owner_label": self._context.get("owner_label"),
+                "test_cases": self._context.get("test_cases"),
             }
         else:
             raise Exception("invalid session owner instance")
@@ -60,7 +62,7 @@ class Session:
         return res_session
 
     def db_update(self):
-        _id = self._session_id
+        _id = self._context_id
 
         if not _id:
             raise Exception(f"session_id is not set: {self.owner.collection_name}")
@@ -75,7 +77,7 @@ class Session:
 
     def attribute_set(self, name, value, db_update=False):
         """Sets the session data for the procedure."""
-        self._session[name] = value
+        self._context[name] = value
 
         if db_update:
             self.db_update()
@@ -83,4 +85,4 @@ class Session:
         return self
 
     def attribute_get(self, name) -> Any:
-        return self._session.get(name)
+        return self._context.get(name)

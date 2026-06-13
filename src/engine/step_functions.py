@@ -41,13 +41,13 @@ def function_call(procedure: Procedure):
 
 def delay_start(procedure: Procedure):
     now = time.monotonic()
-    procedure.session.attribute_set(DEF_PROC_PARAM.TIMESTAMP, now)
+    procedure.context.attribute_set(DEF_PROC_PARAM.TIMESTAMP, now)
     return DEF_OK
 
 
 def delay_check(procedure: Procedure):
     now = time.monotonic()
-    start_time = procedure.session.attribute_get(DEF_PROC_PARAM.TIMESTAMP)
+    start_time = procedure.context.attribute_get(DEF_PROC_PARAM.TIMESTAMP)
     delta = now - start_time
     step_args = procedure.get_active_step().get_args()
     target = step_args[STEP_ARG.DURATION_SECONDS]
@@ -68,7 +68,7 @@ def worker_start(procedure: Procedure):
     thread_name = step_args[STEP_ARG.TITLE]
 
     worker = Worker(procedure, function, args, thread_name)
-    procedure.session.attribute_set(thread_name, worker)
+    procedure.context.attribute_set(thread_name, worker)
     worker.start()
 
     return f"worker start: {thread_name}"
@@ -79,7 +79,7 @@ def worker_wait(procedure: Procedure):
     worker = procedure.get_worker_from_active_step()
     thread_name = worker.name
     if not worker:
-        raise Exception(f"worker '{thread_name}' not found in session")
+        raise Exception(f"worker not found: {thread_name}")
     elif worker.is_complete():
         procedure.nextstate_next()
         return f"{thread_name} completed"

@@ -6,7 +6,7 @@ import json
 import time
 from typing import Any
 
-from engine.session import Session
+from engine.context import Context
 from engine.logger import empty_get_logger, empty_setup_logging, setup_logging
 from engine.utils import Utils
 from engine.constants import *
@@ -34,7 +34,7 @@ class Framework:
         self._procedure_dict: dict[str, int] = {}
 
         self.collection_name = "framework"
-        self.session: Session = Session(self)
+        self.context: Context = Context(self)
         self.db = database
 
         if USE_LOGGING:

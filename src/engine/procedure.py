@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import logging
 
 
-from engine.session import Session
+from engine.context import Context
 from engine.constants import *
 from engine.utils import *
 from engine.step import Step
@@ -34,7 +34,7 @@ class Procedure:
         # public
         self.logger: logging.Logger  # = logging.getLogger("[procedure]")
         self.collection_name = "session"
-        self.session = Session(self)
+        self.context = Context(self)
         self.framework: Framework
         self.db: Db
 
@@ -50,7 +50,7 @@ class Procedure:
         worker_name = step_args.get(STEP_ARG.TITLE)  # [STEP_ARG.TITLE]
         if not worker_name:
             raise Exception(f"missing worker in active step")
-        worker: Worker | None = self.session.attribute_get(worker_name)
+        worker: Worker | None = self.context.attribute_get(worker_name)
         if not worker:
             raise Exception(f"missing worker in active step")
         return worker
