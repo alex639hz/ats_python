@@ -160,5 +160,8 @@ class Framework:
         run_server()
         pass
 
+    def get_time(self):
+        return time.monotonic()
+
 
 framework = Framework()

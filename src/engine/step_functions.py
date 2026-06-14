@@ -3,6 +3,7 @@ from time import time
 from engine import procedure
 from engine.constants import *
 from engine.utils import *
+from engine.framework import framework
 
 from typing import Callable, TYPE_CHECKING
 
@@ -40,13 +41,13 @@ def function_call(procedure: Procedure):
 
 
 def delay_start(procedure: Procedure):
-    now = time.monotonic()
+    now = framework.get_time()
     procedure.context.attribute_set(DEF_PROC_PARAM.TIMESTAMP, now)
     return DEF_OK
 
 
 def delay_check(procedure: Procedure):
-    now = time.monotonic()
+    now = framework.get_time()
     start_time = procedure.context.attribute_get(DEF_PROC_PARAM.TIMESTAMP)
     delta = now - start_time
     step_args = procedure.get_active_step().get_args()

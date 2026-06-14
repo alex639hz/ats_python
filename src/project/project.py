@@ -149,8 +149,8 @@ def test_dut(step_interface: StepInterface):
         msg = "PASS"
     else:
         msg = "FAILED"
-    procedure.logger.info(f"volt rms: {volt_rms}, {msg}")
-    return DEF_OK
+    # procedure.logger.info(f"volt rms: {volt_rms}, {msg}")
+    return f"volt rms: {volt_rms}, {msg}"
 
 
 def my_worker(step_interface: StepInterface):
@@ -204,11 +204,12 @@ def create_procedure_with_builder(label: str) -> Procedure:
         builder.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
         builder.add_step_worker_wait("my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1")
 
+    builder.add_step_delay(5, "delay_5_sec")
     builder.add_step_function(create_session, NOARG, LABEL_CREATE_SESSION)
     builder.add_step_function(prepare_test, NOARG, LABEL_PREPARE_TEST)
     builder.add_step_function(dut_setup_start, NOARG, "dut_setup_start")
     builder.add_step_function(dut_setup_complete, NOARG, "dut_setup_complete")
-    builder.add_step_function(instruments_setup, NOARG, "")
+    builder.add_step_function(instruments_setup, NOARG, "instruments_setup")
     builder.add_step_function(test_dut, NOARG, "test_dut")
     builder.add_step_function(complete_test_case, NOARG, "complete_test_case")
     builder.add_step_exit("SESSION COMPLETED")
