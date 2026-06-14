@@ -1,5 +1,3 @@
-import time
-
 from engine.framework import framework
 from engine.procedure import Procedure
 from project import project
