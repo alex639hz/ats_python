@@ -6,5 +6,13 @@
     {
         "label": "test2",
         "volt_rms_max": 1.8
+    },
+    {
+        "label": "test1",
+        "volt_rms_max": 1.1
+    },
+    {
+        "label": "test2",
+        "volt_rms_max": 1.8
     }
 ]

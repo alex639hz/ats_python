@@ -75,12 +75,21 @@ class Context:
 
         return res
 
-    def attribute_set(self, name, value, db_update=False):
+    def attribute_set(self, name, value):
         """Sets the session data for the procedure."""
         self._context[name] = value
 
-        if db_update:
-            self.db_update()
+        return self
+
+    def attribute_push(self, name, value):
+
+        attribute: Any | None = self._context.get(name)
+
+        if attribute is None or not isinstance(attribute, list):
+            self._context[name] = []
+
+        # array: list =
+        self._context[name].append(value)
 
         return self
 

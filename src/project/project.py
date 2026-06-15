@@ -145,6 +145,7 @@ def test_dut(step_interface: StepInterface):
     volt_rms_max = case["volt_rms_max"]
     scope: Scope = repository.get_by_label("scope")
     volt_rms = scope.measure_volt_rms()
+    procedure.context.attribute_push("volt_rms_buffer", volt_rms)
     if volt_rms > volt_rms_max:
         msg = "PASS"
     else:
@@ -177,8 +178,8 @@ def complete_test_case(step_interface: StepInterface):
     if not cases_completed:
         procedure.nextstate_jump_by_label(LABEL_PREPARE_TEST)
         return DEF_OK
-
-    return DEF_OK
+    var = procedure.context.attribute_get("volt_rms_buffer")
+    return f" {var} " + DEF_OK
 
 
 # create test procedure by using test builder (preset mechanism)
