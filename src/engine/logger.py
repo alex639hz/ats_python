@@ -1,12 +1,15 @@
 import logging
 from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 from pathlib import Path
+from engine.constants import *
+from engine.utils import Utils
 
 # =========================
 # LOGGING CONSTANTS
 # =========================
-LOG_DIR = Path(r"C:\ATS\logs")
-LOG_FILE = LOG_DIR / "app.log"
+file_prefix = Utils.timestamp_prefix()
+# LOG_DIR
+LOG_FILE = LOG_FOLDER / f"{file_prefix}.log"
 DELETE_LOG_ON_STARTUP = True
 
 LOG_LEVEL = logging.INFO
@@ -49,13 +52,32 @@ LOG_CONFIG = {
     },
 }
 
+import json
+
+# import logging
+from datetime import datetime
+
+
+class NDJsonFormatter(logging.Formatter):
+
+    def format(self, record: logging.LogRecord) -> str:
+
+        log_record = {
+            "timestamp": datetime.utcfromtimestamp(record.created).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+
+        return json.dumps(log_record, separators=(",", ":"))
+
 
 # =========================
 # LOGGING SETUP
 # =========================
 def setup_logging(q_log):
     # --- Ensure log directory exists
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_FOLDER.mkdir(parents=True, exist_ok=True)
 
     # --- Delete log file on startup (BEFORE handlers)
     if DELETE_LOG_ON_STARTUP and LOG_FILE.exists():
@@ -64,7 +86,8 @@ def setup_logging(q_log):
     root = logging.getLogger()
     root.setLevel(LOG_LEVEL)
 
-    formatter = logging.Formatter(LOG_FORMAT)
+    # formatter = logging.Formatter(LOG_FORMAT)
+    formatter = NDJsonFormatter()
 
     # --- Console handler
     console_handler = logging.StreamHandler()

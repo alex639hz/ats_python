@@ -1,8 +1,11 @@
 from enum import Enum
+from pathlib import Path
 
 NOARG = {}
 DEF_NO_LABEL = ""
-DEF_OK = "OK"
+DEF_OK = ""
+APP_FOLDER = Path("C:/ats_python")
+LOG_FOLDER = Path("C:/ats_log")
 
 
 class DEF_CMD(Enum):

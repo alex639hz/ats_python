@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 import threading
@@ -148,3 +149,8 @@ class Utils:
         with path.open(encoding="utf-8") as f:
             json_payload = json.load(f)
         return json_payload
+
+    @staticmethod
+    def timestamp_prefix():
+        now = datetime.now()
+        return now.strftime(r"%Y%m%d_%H%M%S")
