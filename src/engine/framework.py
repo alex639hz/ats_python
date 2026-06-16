@@ -89,14 +89,13 @@ class Framework:
         self.q_eng.put(Utils.q_element_create(element.value, args))
 
     def call_shutdown(self, msg=""):
-        # self.logger.info("framework shutdown")
         if len(msg):
             self.logger.info(f"call_shutdown: {msg}")
         self.q_eng_add_element(DEF_CMD.EXIT)
 
     def log(self, command, res):
         command = DEF_CMD(command).value
-        self.logger.info(f"COMMAND: {command} -> {res}")
+        self.logger.info(f"{command} -> {res}")
 
     # def start(self):
     #     self.event_shutdown.set()
@@ -123,7 +122,6 @@ class Framework:
             return DEF_OK
 
         def exit(args={}):
-            # self.logger.info("framework shutdown")
             self.log_listener.stop()
             self.log_listener
             self.event_shutdown.set()

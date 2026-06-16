@@ -1,4 +1,6 @@
 import logging
+import json
+from datetime import datetime
 from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 from pathlib import Path
 from engine.constants import *
@@ -8,11 +10,12 @@ from engine.utils import Utils
 # LOGGING CONSTANTS
 # =========================
 file_prefix = Utils.timestamp_prefix()
-# LOG_DIR
+file_prefix = "test"
 LOG_FILE = LOG_FOLDER / f"{file_prefix}.log"
 DELETE_LOG_ON_STARTUP = True
 
-LOG_LEVEL = logging.INFO
+LOG_LEVEL_CONSOLE = logging.INFO
+LOG_LEVEL_FILE = logging.INFO
 LOG_MAX_BYTES = 5_000_000
 LOG_BACKUP_COUNT = 3
 
@@ -52,11 +55,6 @@ LOG_CONFIG = {
     },
 }
 
-import json
-
-# import logging
-from datetime import datetime
-
 
 class NDJsonFormatter(logging.Formatter):
 
@@ -68,6 +66,10 @@ class NDJsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
+
+        params = getattr(record, "params", None)
+        if params != None:
+            log_record["params"] = params
 
         return json.dumps(log_record, separators=(",", ":"))
 
@@ -84,14 +86,14 @@ def setup_logging(q_log):
         LOG_FILE.unlink()
 
     root = logging.getLogger()
-    root.setLevel(LOG_LEVEL)
+    root.setLevel(LOG_LEVEL_CONSOLE)
 
     # formatter = logging.Formatter(LOG_FORMAT)
     formatter = NDJsonFormatter()
 
     # --- Console handler
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(LOG_LEVEL)
+    console_handler.setLevel(LOG_LEVEL_CONSOLE)
     console_handler.setFormatter(formatter)
     #
     # --- File handler (absolute path)
@@ -101,7 +103,7 @@ def setup_logging(q_log):
         backupCount=LOG_BACKUP_COUNT,
         encoding="utf-8",
     )
-    file_handler.setLevel(LOG_LEVEL)
+    file_handler.setLevel(LOG_LEVEL_FILE)
     file_handler.setFormatter(formatter)
 
     # --- Queue listener owns real handlers

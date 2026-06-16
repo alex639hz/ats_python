@@ -36,7 +36,7 @@ DEF_TERMINATION_NONE = None
 # DEF_READ_TERMINATION_QUERY = "\n"
 # DEF_READ_TERMINATION_BIGQUERY = None
 # DEF_WRITE_TERMINATION_CHAR = "\n"
-DEF_SHOULD_LOG_SCPI = True
+DEF_SHOULD_LOG_SCPI = False
 # TODO visa_resource_manager should be closed on app exit i.e. engine.close()
 visa_resource_manager = pyvisa.ResourceManager()
 
@@ -103,7 +103,8 @@ class Instrument:
 
         if DEF_VERIFY_CONNECTION_AT_INIT:
             log_msg = self._idn = self.std_idn()
-            logger.info(log_msg)
+            if DEF_SHOULD_LOG_SCPI:
+                logger.info(log_msg)
 
         repository.add(self)
 

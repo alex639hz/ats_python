@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import time
 
 # from engine import utils
@@ -21,6 +22,8 @@ from project.dut import Dut
 LABEL_CREATE_SESSION = "create_session"
 LABEL_PREPARE_TEST = "prepare_test"
 LABEL_TESTER = "tester"
+
+logger = logging.getLogger("[user]")
 
 
 class Tester:
@@ -157,11 +160,19 @@ def test_dut(step_interface: StepInterface):
 def my_worker(step_interface: StepInterface):
     """demonstrate a worker running in a separate thread."""
     procedure, args = Utils.extract_step_interface(step_interface)
+    path = LOG_FOLDER / f"test.log"
+
+    import json
+
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            record = json.loads(line)
+            print(record["level"])
 
     # simulate some work
     for i in range(3):
         time.sleep(0.5)
-        procedure.logger.info(f"worker stage: {i}")
+        logger.info(f"worker stage: {i}")
     try:
         procedure.get_worker_from_active_step().set_complete()
     except:
@@ -199,7 +210,7 @@ def create_procedure_with_preset() -> Procedure:
 # create test procedure by adding steps one by one
 def create_procedure_with_builder(label: str) -> Procedure:
     builder = ProcedureBuilder(label)
-    USE_WORKER = False
+    USE_WORKER = True
     if USE_WORKER:
         TIMEOUT_IN_SECONDS = 5
         builder.add_step_worker_start("my_worker1", my_worker, {"11": "world"})

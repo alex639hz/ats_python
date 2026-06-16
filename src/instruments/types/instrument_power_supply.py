@@ -43,14 +43,16 @@ class PowerSupply(Instrument):
         # logger.info(f"{self._label} is on")
 
     def api_set_voltage_limit(self, volt):
-        logger.info(f"{self._label} voltage limit set: {volt}")
+        # logger.info(f"{self._label} voltage limit set: {volt}")
         pass
 
     def api_set_voltage(self, volt):
-        logger.info(f"{self._label} voltage set: {volt}")
+        # logger.info(f"{self._label} voltage set: {volt}")
+        pass
 
     def api_set_current(self, amper):
-        logger.info(f"{self._label} current set: {amper}")
+        # logger.info(f"{self._label} current set: {amper}")
+        pass
 
     def setup(self):
         pass
