@@ -71,3 +71,6 @@ class ProcedureBuilder:
             step_args,
             label,
         )
+
+    def merge(another_builder:ProcedureBuilder):
+        self.steps.append(another_builder.steps)

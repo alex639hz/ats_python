@@ -19,7 +19,7 @@ class Context:
         self.owner = owner
         pass
 
-    def create(self, session_args: dict[str, Any] = {}, insert_db=True):
+    def create(self, session_args: dict[str, Any] = {}):
         """Creates a session for the procedure.
         The session dictionary stored in the procedure instance and used as data store during procedure execution.
         The session can be stored in the database if insert_db is True.
@@ -30,51 +30,11 @@ class Context:
             **session_args,
         }
         self._context = context
-
-        IGNORE_DB = True
-        if not IGNORE_DB:
-            self.prepare_session()
-
-            if insert_db:
-                res = self.owner.db.insert_one("session", self._context)
-                self._context_id = res.inserted_id
-
-        return context
-
-    def prepare_session(self):
-        from engine.procedure import Procedure
-
-        if isinstance(self.owner, Procedure):
-            res_session = {
-                "created_at": self._context.get("created_at"),
-                "owner_label": self._context.get("owner_label"),
-                "test_cases": self._context.get("test_cases"),
-            }
-        elif isinstance(self.owner, Framework):
-            res_session = {
-                "created_at": self._context.get("created_at"),
-                "owner_label": self._context.get("owner_label"),
-                "test_cases": self._context.get("test_cases"),
-            }
-        else:
-            raise Exception("invalid session owner instance")
-
-        return res_session
-
-    def db_update(self):
-        _id = self._context_id
-
-        if not _id:
-            raise Exception(f"session_id is not set: {self.owner.collection_name}")
-
-        res_session = self.prepare_session()
-
-        res = self.owner.db.update_one(
-            self.owner.collection_name, {"_id": _id}, {**res_session}
-        )
-
-        return res
-
+        return self._context
+    
+    def get_context(self):
+        return self._context
+    
     def attribute_set(self, name, value):
         """Sets the session data for the procedure."""
         self._context[name] = value

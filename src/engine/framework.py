@@ -32,8 +32,6 @@ class Framework:
         self.event_shutdown = threading.Event()
         self._procedure_list: list["Procedure"] = []
         self._procedure_dict: dict[str, int] = {}
-
-        self.collection_name = "framework"
         self.context: Context = Context(self)
         self.db = database
 

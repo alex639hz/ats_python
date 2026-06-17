@@ -33,7 +33,6 @@ class Procedure:
 
         # public
         self.logger: logging.Logger  # = logging.getLogger("[procedure]")
-        self.collection_name = "session"
         self.context = Context(self)
         self.framework: Framework
         self.db: Db

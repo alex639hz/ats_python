@@ -89,30 +89,6 @@ def prepare_test(step_interface: StepInterface):
     return f"$ {case} $"
 
 
-def instruments_setup(step_interface: StepInterface):
-    """setup instruments once or based on test case"""
-    procedure, args = Utils.extract_step_interface(step_interface)
-    scope: Scope = repository.get_instrument_by_label("scope")
-    dmm: Dmm = repository.get_instrument_by_label("dmm")
-    ps: PowerSupply = repository.get_instrument_by_label("ps")
-
-    scope.set_waveform_metadata(
-        source="CHAN1",
-        format="WORD",
-        byte_order="SWAP",
-        points=1024,
-        x_increment=1e-9,
-        x_origin=0.0,
-        y_increment=1.0,
-        y_origin=0.0,
-    )
-
-    dmm.setup()
-    ps.setup()
-
-    return DEF_OK
-
-
 def dut_setup_start(step_interface: StepInterface):
     procedure, args = Utils.extract_step_interface(step_interface)
     dut = Dut()
@@ -181,19 +157,6 @@ def my_worker(step_interface: StepInterface):
     return None
 
 
-def complete_test_case(step_interface: StepInterface):
-    procedure, args = Utils.extract_step_interface(step_interface)
-
-    tester: Tester = procedure.context.attribute_get(LABEL_TESTER)
-    cases_completed = tester.complete_case()
-    if not cases_completed:
-        procedure.nextstate_jump_by_label(LABEL_PREPARE_TEST)
-        return DEF_OK
-    var = procedure.context.attribute_get("volt_rms_buffer")
-    return f" {var} " + DEF_OK
-
-
-# create test procedure by using test builder (preset mechanism)
 def create_procedure_with_preset() -> Procedure:
 
     test = TestBuilderPowerSupply()
@@ -206,23 +169,62 @@ def create_procedure_with_preset() -> Procedure:
 
     return procedure
 
+class Project():
+    def __init__(self):
+        self.test = {} 
+        self.builder = ProcedureBuilder("label")
+        self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
+        self.case = cases[0]
+        self.dut = Dut()
 
-# create test procedure by adding steps one by one
-def create_procedure_with_builder(label: str) -> Procedure:
-    builder = ProcedureBuilder(label)
-    USE_WORKER = True
-    if USE_WORKER:
-        TIMEOUT_IN_SECONDS = 5
-        builder.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
-        builder.add_step_worker_wait("my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1")
 
-    builder.add_step_delay(5, "delay_5_sec")
-    builder.add_step_function(create_session, NOARG, LABEL_CREATE_SESSION)
-    builder.add_step_function(prepare_test, NOARG, LABEL_PREPARE_TEST)
-    builder.add_step_function(dut_setup_start, NOARG, "dut_setup_start")
-    builder.add_step_function(dut_setup_complete, NOARG, "dut_setup_complete")
-    builder.add_step_function(instruments_setup, NOARG, "instruments_setup")
-    builder.add_step_function(test_dut, NOARG, "test_dut")
-    builder.add_step_function(complete_test_case, NOARG, "complete_test_case")
-    builder.add_step_exit("SESSION COMPLETED")
-    return builder.generate_procedure()
+    def build():
+        USE_WORKER = True
+        if USE_WORKER:
+            TIMEOUT_IN_SECONDS = 5
+            self.builder.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
+            self.builder.add_step_worker_wait("my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1")
+
+        self.builder.add_step_delay(1, "delay")
+        self.builder.add_step_function(self._create_test, {"case": case}, None)
+        self.builder.add_step_function(self._create_env, NOARG, None)
+        # self.builder.add_step_function(prepare_test, NOARG, LABEL_PREPARE_TEST)
+        # self.builder.add_step_function(dut_setup_start, NOARG, "dut_setup_start")
+        # self.builder.add_step_function(dut_setup_complete, NOARG, "dut_setup_complete")
+        # self.builder.add_step_function(instruments_setup, NOARG, "instruments_setup")
+        # self.builder.add_step_function(test_dut, NOARG, "test_dut")
+        # self.builder.add_step_function(complete_test_case, NOARG, "complete_test_case")
+        self.builder.add_step_exit("SESSION COMPLETED")
+        return builder.generate_procedure()
+
+    def _create_test(self,step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        case = args["case"]
+        procedure.context.create({"case": case})
+    
+    def _create_env(self,step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        case = procedure.context.attribute_get("case")
+        ps: PowerSupply = repository.get_instrument_by_label("ps")
+        ps.setup(case)
+
+
+
+    def _measure(self,step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        case = args["case"]
+
+        scope: Scope = repository.get_instrument_by_label("scope")
+        dmm: Dmm = repository.get_instrument_by_label("dmm")
+
+        channel = case["channel"]
+        dmm_read = dmm.read(channel)
+        dut_read = dut.register_read(dut.REG2)
+            
+        procedure.context.attribute_set("dmm_read":dmm_read)
+        procedure.context.attribute_set("dut_read":dut_read)
+
+        results = procedure.context.get_context() 
+        procedure.db.insert_one("test",results)
+
+        
