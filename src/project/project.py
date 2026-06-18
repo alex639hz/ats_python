@@ -26,7 +26,8 @@ LABEL_TESTER = "tester"
 
 logger = logging.getLogger("[user]")
 
-
+LABEL_NONE = None 
+LABEL_NAME = "__name__"
 class Project:
 
     def __init__(self) -> None:
@@ -41,102 +42,114 @@ class Project:
         USE_WORKER = True
         if USE_WORKER:
             TIMEOUT_IN_SECONDS = 5
-            builder.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
+            builder.add_step_worker_start("my_worker1", self.my_worker, {"11": "world"})
             builder.add_step_worker_wait(
                 "my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1"
             )
-        builder.add_step_function(self._pre_execution, NOARG, "_pre_execution")
-        # builder.add_step_function(self._execution, NOARG, "_execution")
-        # builder.add_step_function(self._post_execution, NOARG, "_post_execution")
+        builder.add_step_function(self.runtime_pre_exec, NOARG, LABEL_NAME)
+        builder.add_step_function(self.runtime_exec, NOARG, LABEL_NAME)
+        builder.add_step_function(self.runtime_post_exec, NOARG, LABEL_NAME)
         builder.add_step_exit("SESSION COMPLETED")
 
         procedure = builder.generate_procedure().start()
         framework.procedure_append(procedure)
 
-    def _pre_execution(self, step_interface: StepInterface):
+    def runtime_pre_exec(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
+        session_id = None 
+        case_id = None
+
+        def create_session(): 
+            session = {
+                "created_at": datetime.now(),
+                "label": procedure.get_label(),
+                "cases": self.cases,
+            }
+            res = procedure.db.insert_one(COLLECTION_SESSION, session)
+            session_id = res.inserted_id
+
+            procedure.context.attribute_set("session_id", session_id)
+            procedure.context.attribute_set("session", session)
+
+        def create_case():
+            case = {
+                "session_id": session_id,
+                "case": self.case,
+            }
+            res = procedure.db.insert_one(COLLECTION_CASE, case)
+            case_id = res.inserted_id
+
+            procedure.context.attribute_set("case_id", case_id)
+            procedure.context.attribute_set("case", case)
+
+        def setup_env(): 
+            dmm: Dmm = repository.get_instrument_by_label("dmm")
+            ps: PowerSupply = repository.get_instrument_by_label("ps")
+
+            dmm.setup()
+            ps.setup()
+
+        def setup_dut():
+            self.dut.register_write(dut.REG1, dut.REG1_SETUP_C)
+            self.dut.bit_write(dut.BIT0,dut.BIT_ON)
 
         # create session db
         ###################
-
-        session = {
-            "created_at": datetime.now(),
-            "label": procedure.get_label(),
-            "cases": self.cases,
-        }
-        res = procedure.db.insert_one("session", session)
-        session_id = res.inserted_id
-
-        procedure.context.attribute_set("session_id", session_id)
-        procedure.context.attribute_set("session", session)
+        create_session()
 
         # create test db
         ################
-
-        case = {
-            "session_id": session_id,
-            "case": self.case,
-        }
-        res = procedure.db.insert_one("case", case)
-        case_id = res.inserted_id
-
-        procedure.context.attribute_set("case_id", case_id)
-        procedure.context.attribute_set("case", case)
+        create_case()
 
         # instrument setup
         ##################
+        setup_env()
 
-        dmm: Dmm = repository.get_instrument_by_label("dmm")
-        ps: PowerSupply = repository.get_instrument_by_label("ps")
-
-        dmm.setup()
-        ps.setup()
+        # dut setup
+        ##################
+        setup_dut()
 
         return DEF_OK
 
-    def _execution(self):
-        pass
+    def runtime_exec(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        scope: Scope = repository.get_instrument_by_label("scope")
+        volt_rms = scope.measure_volt_rms()
+        results = {
+            "volt_rms":volt_rms
+        }
+        procedure.context.attribute_set("result",results)
+        
+    def runtime_post_exec(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
 
-    def _post_execution(self):
-        pass
+        case_id = procedure.context.attribute_get("case_id")
+        result = procedure.context.attribute_get("result")
+        res = procedure.db.update_one(COLLECTION_CASE,{"_id":case_id},{"result":result})
 
+    @staticmethod
+    def my_worker(step_interface: StepInterface):
+        """demonstrate a worker running in a separate thread."""
+        procedure, args = Utils.extract_step_interface(step_interface)
+        path = LOG_FOLDER / f"test.log"
 
-def dut_setup_start(step_interface: StepInterface):
-    procedure, args = Utils.extract_step_interface(step_interface)
-    dut = Dut()
+        import json
 
-    dut.register_write(dut.REG1, dut.REG1_SETUP_C)
-    dut.register_write(dut.REG2, dut.REG2_SETUP_A)
-    dut.bit_write(
-        dut.BIT0,
-        dut.BIT_ON,
-    )
-    procedure.context.attribute_set("dut", dut)
-    return DEF_OK
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                record = json.loads(line)
+                logger.info("hello worker " + record["level"])
 
+        # simulate some work
+        for i in range(3):
+            time.sleep(0.5)
+            logger.info(f"worker stage: {i}")
+        try:
+            procedure.get_worker_from_active_step().set_complete()
+        except:
+            pass
 
-def my_worker(step_interface: StepInterface):
-    """demonstrate a worker running in a separate thread."""
-    procedure, args = Utils.extract_step_interface(step_interface)
-    path = LOG_FOLDER / f"test.log"
-
-    import json
-
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            record = json.loads(line)
-            logger.info("hello worker " + record["level"])
-
-    # simulate some work
-    for i in range(3):
-        time.sleep(0.5)
-        logger.info(f"worker stage: {i}")
-    try:
-        procedure.get_worker_from_active_step().set_complete()
-    except:
-        pass
-
-    return None
+        return None
 
 
 def create_procedure_with_preset() -> Procedure:
@@ -152,16 +165,3 @@ def create_procedure_with_preset() -> Procedure:
     procedure = test.build("power supply test")
 
     return procedure
-
-
-def instruments_setup(step_interface: StepInterface):
-    """setup instruments once or based on test case"""
-    procedure, args = Utils.extract_step_interface(step_interface)
-    scope: Scope = repository.get_instrument_by_label("scope")
-    dmm: Dmm = repository.get_instrument_by_label("dmm")
-    ps: PowerSupply = repository.get_instrument_by_label("ps")
-
-    dmm.setup()
-    ps.setup()
-
-    return DEF_OK

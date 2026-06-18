@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 
 COLLECTION_SESSION = "session"
+COLLECTION_CASE = "session"
 
 
 class Context:
