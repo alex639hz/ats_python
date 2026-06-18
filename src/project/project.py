@@ -4,6 +4,7 @@ import time
 
 # from engine import utils
 from engine import procedure
+from engine.framework import Framework
 from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
 from engine.db import database
@@ -26,67 +27,78 @@ LABEL_TESTER = "tester"
 logger = logging.getLogger("[user]")
 
 
-class Tester:
+class Project:
 
-    def __init__(self, procedure: Procedure, cases):
-        self.procedure = procedure
-        self.procedure.context.create({"test_cases": cases})
-        self.index = 0
-        self.cases = cases
+    def __init__(self) -> None:
+        self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
+        self.case_index = 0
+        self.case = self.cases[self.case_index]
+        self.dut = Dut()
 
-    def initialize(self):
-        self.procedure.context.attribute_set(LABEL_TESTER, self)
+    def export(self, framework: Framework):
+        builder = ProcedureBuilder("label")
+        builder.add_step_delay(1, "delay")
+        USE_WORKER = True
+        if USE_WORKER:
+            TIMEOUT_IN_SECONDS = 5
+            builder.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
+            builder.add_step_worker_wait(
+                "my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1"
+            )
+        builder.add_step_function(self._pre_execution, NOARG, "_pre_execution")
+        # builder.add_step_function(self._execution, NOARG, "_execution")
+        # builder.add_step_function(self._post_execution, NOARG, "_post_execution")
+        builder.add_step_exit("SESSION COMPLETED")
 
-    def get_active_case(self):
-        return self.cases[self.index]
+        procedure = builder.generate_procedure().start()
+        framework.procedure_append(procedure)
 
-    def count(self):
-        return len(self.cases)
+    def _pre_execution(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
 
-    def complete_case(self):
-        self.index += 1
-        is_completed = self.index >= self.count()
-        return is_completed
+        # create session db
+        ###################
 
-    def get_session(self):
-        res_session = {
-            "created_at": self.procedure.context.attribute_get("created_at"),
-            "owner_label": self.procedure.context.attribute_get("owner_label"),
-            "test_cases": self.procedure.context.attribute_get("test_cases"),
+        session = {
+            "created_at": datetime.now(),
+            "label": procedure.get_label(),
+            "cases": self.cases,
         }
-        return {}
+        res = procedure.db.insert_one("session", session)
+        session_id = res.inserted_id
 
+        procedure.context.attribute_set("session_id", session_id)
+        procedure.context.attribute_set("session", session)
 
-def create_session(step_interface: StepInterface):
-    procedure, args = Utils.extract_step_interface(step_interface)
+        # create test db
+        ################
 
-    test_cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
+        case = {
+            "session_id": session_id,
+            "case": self.case,
+        }
+        res = procedure.db.insert_one("case", case)
+        case_id = res.inserted_id
 
-    test_count = len(test_cases)
+        procedure.context.attribute_set("case_id", case_id)
+        procedure.context.attribute_set("case", case)
 
-    if not test_count:
-        return "no test cases"
+        # instrument setup
+        ##################
 
-    tester = Tester(procedure, test_cases)
-    tester.initialize()
-    db_session = {
-        "created_at": datetime.now(),
-        "owner_label": procedure.get_label(),
-        "test_cases": test_cases,
-    }
-    res = procedure.db.insert_one("session", db_session)
-    _id = res.inserted_id
-    procedure.context.attribute_set("session_id", _id)
-    return f"{_id} " + DEF_OK
+        dmm: Dmm = repository.get_instrument_by_label("dmm")
+        ps: PowerSupply = repository.get_instrument_by_label("ps")
 
+        dmm.setup()
+        ps.setup()
 
-def prepare_test(step_interface: StepInterface):
-    procedure, args = Utils.extract_step_interface(step_interface)
+        return DEF_OK
 
-    tester: Tester = procedure.context.attribute_get(LABEL_TESTER)
-    case = tester.get_active_case()
+    def _execution(self):
+        pass
 
-    return f"$ {case} $"
+    def _post_execution(self):
+        pass
 
 
 def dut_setup_start(step_interface: StepInterface):
@@ -103,36 +115,6 @@ def dut_setup_start(step_interface: StepInterface):
     return DEF_OK
 
 
-def dut_setup_complete(step_interface: StepInterface):
-    procedure, args = Utils.extract_step_interface(step_interface)
-    dut: Dut = procedure.context.attribute_get("dut")
-    dmm: Dmm = repository.get_instrument_by_label("dmm")
-    reg1_val = dut.register_read(dut.REG1)
-
-    ERROR_DEMO = False
-    if ERROR_DEMO:
-        procedure.nextstate_exit("failed dut_verify")
-        return
-
-    return DEF_OK
-
-
-def test_dut(step_interface: StepInterface):
-    procedure, args = Utils.extract_step_interface(step_interface)
-    tester: Tester = procedure.context.attribute_get(LABEL_TESTER)
-    case = tester.get_active_case()
-    volt_rms_max = case["volt_rms_max"]
-    scope: Scope = repository.get_by_label("scope")
-    volt_rms = scope.measure_volt_rms()
-    procedure.context.attribute_push("volt_rms_buffer", volt_rms)
-    if volt_rms > volt_rms_max:
-        msg = "PASS"
-    else:
-        msg = "FAILED"
-    # procedure.logger.info(f"volt rms: {volt_rms}, {msg}")
-    return f"volt rms: {volt_rms}, {msg}"
-
-
 def my_worker(step_interface: StepInterface):
     """demonstrate a worker running in a separate thread."""
     procedure, args = Utils.extract_step_interface(step_interface)
@@ -143,7 +125,7 @@ def my_worker(step_interface: StepInterface):
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
             record = json.loads(line)
-            print(record["level"])
+            logger.info("hello worker " + record["level"])
 
     # simulate some work
     for i in range(3):
@@ -158,73 +140,28 @@ def my_worker(step_interface: StepInterface):
 
 
 def create_procedure_with_preset() -> Procedure:
+    def my_func():
+        pass
 
     test = TestBuilderPowerSupply()
-    test.step_init_test(create_session)
-    test.step_setup_inst(instruments_setup)
-    test.step_dut_setup(dut_setup_start)
-    test.step_start_measurement(test_dut)
-    test.step_generate_report(complete_test_case)
+    test.step_init_test(my_func)
+    test.step_setup_inst(my_func)
+    test.step_dut_setup(my_func)
+    test.step_start_measurement(my_func)
+    test.step_generate_report(my_func)
     procedure = test.build("power supply test")
 
     return procedure
 
-class Project():
-    def __init__(self):
-        self.test = {} 
-        self.builder = ProcedureBuilder("label")
-        self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
-        self.case = cases[0]
-        self.dut = Dut()
 
+def instruments_setup(step_interface: StepInterface):
+    """setup instruments once or based on test case"""
+    procedure, args = Utils.extract_step_interface(step_interface)
+    scope: Scope = repository.get_instrument_by_label("scope")
+    dmm: Dmm = repository.get_instrument_by_label("dmm")
+    ps: PowerSupply = repository.get_instrument_by_label("ps")
 
-    def build():
-        USE_WORKER = True
-        if USE_WORKER:
-            TIMEOUT_IN_SECONDS = 5
-            self.builder.add_step_worker_start("my_worker1", my_worker, {"11": "world"})
-            self.builder.add_step_worker_wait("my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1")
+    dmm.setup()
+    ps.setup()
 
-        self.builder.add_step_delay(1, "delay")
-        self.builder.add_step_function(self._create_test, {"case": case}, None)
-        self.builder.add_step_function(self._create_env, NOARG, None)
-        # self.builder.add_step_function(prepare_test, NOARG, LABEL_PREPARE_TEST)
-        # self.builder.add_step_function(dut_setup_start, NOARG, "dut_setup_start")
-        # self.builder.add_step_function(dut_setup_complete, NOARG, "dut_setup_complete")
-        # self.builder.add_step_function(instruments_setup, NOARG, "instruments_setup")
-        # self.builder.add_step_function(test_dut, NOARG, "test_dut")
-        # self.builder.add_step_function(complete_test_case, NOARG, "complete_test_case")
-        self.builder.add_step_exit("SESSION COMPLETED")
-        return builder.generate_procedure()
-
-    def _create_test(self,step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        case = args["case"]
-        procedure.context.create({"case": case})
-    
-    def _create_env(self,step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        case = procedure.context.attribute_get("case")
-        ps: PowerSupply = repository.get_instrument_by_label("ps")
-        ps.setup(case)
-
-
-
-    def _measure(self,step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        case = args["case"]
-
-        scope: Scope = repository.get_instrument_by_label("scope")
-        dmm: Dmm = repository.get_instrument_by_label("dmm")
-
-        channel = case["channel"]
-        dmm_read = dmm.read(channel)
-        dut_read = dut.register_read(dut.REG2)
-            
-        procedure.context.attribute_set("dmm_read":dmm_read)
-        procedure.context.attribute_set("dut_read":dut_read)
-
-        results = procedure.context.get_context() 
-        procedure.db.insert_one("test",results)
-
-        
+    return DEF_OK

@@ -103,8 +103,8 @@ class Instrument:
 
         if DEF_VERIFY_CONNECTION_AT_INIT:
             log_msg = self._idn = self.std_idn()
-            if DEF_SHOULD_LOG_SCPI:
-                logger.info(log_msg)
+            # if DEF_SHOULD_LOG_SCPI:
+            logger.info(log_msg)
 
         repository.add(self)
 

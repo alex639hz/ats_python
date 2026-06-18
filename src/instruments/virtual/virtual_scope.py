@@ -14,7 +14,7 @@ DEF_DEMO_SLEEP_SECONDS = 1
 class VirtualScope(VirtualInstrumentBase):
     def __init__(self, instrument: Instrument):
         super().__init__(instrument)
-        self.idn = "SCOPE,MODEL-1,1.0"
+        self.idn = "V-SCOPE,MODEL-1,1.0"
         self.wave_points = DEF_DEMO_SAMPLES_COUNT
         self.wave_form = "BYTE"
         self.wave_mode = "NORM"

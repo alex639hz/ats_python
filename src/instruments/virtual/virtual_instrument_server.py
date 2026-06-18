@@ -62,7 +62,7 @@ def start_server(virtual_instrument) -> None:
         s.bind((HOST, port))
         s.listen(5)
 
-        logger.info("%s v_server listening on %s:%s", label, HOST, port)
+        # logger.info("%s v_server listening on %s:%s", label, HOST, port)
 
         while True:
             conn, addr = s.accept()

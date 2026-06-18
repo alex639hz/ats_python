@@ -1,15 +1,14 @@
 from engine.framework import framework
-from engine.procedure import Procedure
-from project import project
+from project.project import Project
 
 try:
 
-    procedure = project.create_procedure_with_builder("my-dut-test")
+    # procedure = project.create_procedure_with_builder("my-dut-test")
 
     SHOULD_APPEND_PROCEDURE = True
     if SHOULD_APPEND_PROCEDURE:
-        framework.procedure_append(procedure)
-        procedure.start()
+        project = Project()
+        project.export(framework)
 
     SHOULD_START_API_SERVER = False
     if SHOULD_START_API_SERVER:
