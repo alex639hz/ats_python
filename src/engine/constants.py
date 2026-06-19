@@ -3,7 +3,7 @@ from pathlib import Path
 
 NOARG = {}
 DEF_NO_LABEL = ""
-DEF_OK = ""
+DEF_OK = "OK"
 APP_FOLDER = Path("C:/ats_python")
 LOG_FOLDER = Path("C:/ats_log")
 
@@ -85,6 +85,8 @@ class STEP_ARG(Enum):
 
 
 class DEF_NEXTSTATE_OP(Enum):
+
+    WAIT = "WAIT"  # repeat current step again
     STAY = "STAY"  # repeat current step again
     NEXT = "NEXT"  # continue to next state
     JUMP = "JUMP"  # jump to step by label

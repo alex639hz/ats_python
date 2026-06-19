@@ -20,7 +20,7 @@ class DutRegisterMap(Register):
     BIT1: BitAddress = BitAddress((REG2, 1))
 
 
-class Dut(DutRegisterMap):
+class DutA(DutRegisterMap):
 
     def __init__(self):
         self.reg_store: dict[Any, int] = {}

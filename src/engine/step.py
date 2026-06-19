@@ -25,14 +25,15 @@ class Step:
 
     def log(self, procedure: Procedure, msg=""):
         proc_label = procedure.get_label()
-        log_msg = f"{proc_label}: {self.op.value}\t{self.label}\t{msg}"
         params = {
             "params": {
-                "hello": "world_2026",
+                "proc_label": proc_label,
+                "step_label": self.label,
+                "operation": self.op.value,
                 "msg": msg,
             }
         }
-        procedure.logger.info("aaaaaa", extra=params)
+        procedure.logger.info(msg, extra=params)
         return
 
     def get_arg(self, key):

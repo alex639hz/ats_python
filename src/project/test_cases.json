@@ -1,7 +1,10 @@
 [
     {
         "label": "test1",
-        "volt_rms_max": 1.1
+        "volt_rms_max": 1.1,
+        "dut_type": "dutA",
+        "test_type": "testA"
+
     },
     {
         "label": "test2",

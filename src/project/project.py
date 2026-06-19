@@ -18,7 +18,7 @@ from instruments.types.instrument_power_supply import PowerSupply
 from instruments.types.instrument_dmm import Dmm
 from instruments.types.instrument_scope import Scope
 from presets.power_integrity import TestBuilderPowerSupply
-from project.dut import Dut
+from project.duts import *
 
 LABEL_CREATE_SESSION = "create_session"
 LABEL_PREPARE_TEST = "prepare_test"
@@ -26,20 +26,24 @@ LABEL_TESTER = "tester"
 
 logger = logging.getLogger("[user]")
 
-LABEL_NONE = None 
+LABEL_NONE = None
 LABEL_NAME = "__name__"
+COLLECTION_SESSION = "session"
+COLLECTION_CASE = "case"
+
+
 class Project:
 
-    def __init__(self) -> None:
+    def __init__(self, framework: Framework) -> None:
         self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
         self.case_index = 0
         self.case = self.cases[self.case_index]
-        self.dut = Dut()
+        self.dut = DutA()
+        self.framework = framework
 
-    def export(self, framework: Framework):
-        builder = ProcedureBuilder("label")
-        builder.add_step_delay(1, "delay")
-        USE_WORKER = True
+    def export(self):
+        builder = ProcedureBuilder("main_proc")
+        USE_WORKER = False
         if USE_WORKER:
             TIMEOUT_IN_SECONDS = 5
             builder.add_step_worker_start("my_worker1", self.my_worker, {"11": "world"})
@@ -52,16 +56,16 @@ class Project:
         builder.add_step_exit("SESSION COMPLETED")
 
         procedure = builder.generate_procedure().start()
-        framework.procedure_append(procedure)
+        self.framework.procedure_append(procedure)
 
     def runtime_pre_exec(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        session_id = None 
-        case_id = None
+        created_at = self.framework.get_time_datetime()
 
-        def create_session(): 
+        def create_session():
+            global session
             session = {
-                "created_at": datetime.now(),
+                "created_at": created_at,
                 "label": procedure.get_label(),
                 "cases": self.cases,
             }
@@ -72,17 +76,21 @@ class Project:
             procedure.context.attribute_set("session", session)
 
         def create_case():
+            session = procedure.context.attribute_get("session")
+            session_id = procedure.context.attribute_get("session_id")
+            selected_case = session["cases"][0]
+
             case = {
+                "created_at": created_at,
                 "session_id": session_id,
-                "case": self.case,
+                "case": selected_case,
             }
             res = procedure.db.insert_one(COLLECTION_CASE, case)
             case_id = res.inserted_id
-
             procedure.context.attribute_set("case_id", case_id)
             procedure.context.attribute_set("case", case)
 
-        def setup_env(): 
+        def setup_env():
             dmm: Dmm = repository.get_instrument_by_label("dmm")
             ps: PowerSupply = repository.get_instrument_by_label("ps")
 
@@ -90,8 +98,8 @@ class Project:
             ps.setup()
 
         def setup_dut():
-            self.dut.register_write(dut.REG1, dut.REG1_SETUP_C)
-            self.dut.bit_write(dut.BIT0,dut.BIT_ON)
+            self.dut.register_write(self.dut.REG1, self.dut.REG1_SETUP_C)
+            self.dut.bit_write(self.dut.BIT0, self.dut.BIT_ON)
 
         # create session db
         ###################
@@ -109,23 +117,67 @@ class Project:
         ##################
         setup_dut()
 
+        case = procedure.context.attribute_get("case")["case"]
+        case_type = case["test_type"]
+        case_label = case["label"]
+
+        if case_type == "testA":
+            case_builder = ProcedureBuilder(case_label)
+            USE_WORKER = False
+            if USE_WORKER:
+                TIMEOUT_IN_SECONDS = 5
+                case_builder.add_step_worker_start(
+                    "my_worker1", self.my_worker, {"11": "world"}
+                )
+                case_builder.add_step_worker_wait(
+                    "my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1"
+                )
+            case_builder.add_step_function(self.runtime_set_thermal, NOARG, LABEL_NAME)
+            # case_builder.add_step_function(self.runtime_set_dut, NOARG, LABEL_NAME)
+            # case_builder.add_step_function(self.runtime_measure, NOARG, LABEL_NAME)
+            case_builder.add_step_exit(f"{case_label} COMPLETED")
+
+            case_procedure = case_builder.generate_procedure().start()
+            self.framework.procedure_append(case_procedure)
+            self.framework.context.attribute_set("case_procedure", case_procedure)
+
+        return DEF_OK
+
+    def runtime_set_thermal(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        start_at_key = "start_At"
+        start_at = procedure.context.attribute_get(start_at_key)
+        # if start_at == None:
+        # start_at = datetime.now()
+        # else:
+        # start_at += 1
+
+        procedure.context.attribute_set(start_at_key, start_at)
+
+        SHOULD_WAIT = 10
+
+        if SHOULD_WAIT:
+            procedure.nextstate_stay()
+            return "WAITING"
+
+        procedure.nextstate_next()
         return DEF_OK
 
     def runtime_exec(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         scope: Scope = repository.get_instrument_by_label("scope")
         volt_rms = scope.measure_volt_rms()
-        results = {
-            "volt_rms":volt_rms
-        }
-        procedure.context.attribute_set("result",results)
-        
+        results = {"volt_rms": volt_rms}
+        procedure.context.attribute_set("result", results)
+
     def runtime_post_exec(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
 
         case_id = procedure.context.attribute_get("case_id")
         result = procedure.context.attribute_get("result")
-        res = procedure.db.update_one(COLLECTION_CASE,{"_id":case_id},{"result":result})
+        res = procedure.db.update_one(
+            COLLECTION_CASE, {"_id": case_id}, {"result": result}
+        )
 
     @staticmethod
     def my_worker(step_interface: StepInterface):

@@ -12,7 +12,7 @@ from instruments.instrument_repo import repository
 from instruments.types.instrument_power_supply import PowerSupply
 from instruments.types.instrument_dmm import Dmm
 from instruments.types.instrument_scope import Scope
-from project.dut import DUT_BIT_INDEX, DUT_REG_ADDRESS, Dut, Register, DutRegisterMap
+from project.dut_a import DUT_BIT_INDEX, DUT_REG_ADDRESS, DutA, Register, DutRegisterMap
 
 logger = logging.getLogger("[project]")
 

@@ -41,13 +41,13 @@ def function_call(procedure: Procedure):
 
 
 def delay_start(procedure: Procedure):
-    now = framework.get_time()
+    now = framework.get_time_monotonic()
     procedure.context.attribute_set(DEF_PROC_PARAM.TIMESTAMP, now)
     return DEF_OK
 
 
 def delay_check(procedure: Procedure):
-    now = framework.get_time()
+    now = framework.get_time_monotonic()
     start_time = procedure.context.attribute_get(DEF_PROC_PARAM.TIMESTAMP)
     delta = now - start_time
     step_args = procedure.get_active_step().get_args()

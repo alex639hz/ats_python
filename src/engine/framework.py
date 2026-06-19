@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 import threading
 import queue
@@ -87,16 +88,17 @@ class Framework:
         self.q_eng.put(Utils.q_element_create(element.value, args))
 
     def call_shutdown(self, msg=""):
-        if len(msg):
-            self.logger.info(f"call_shutdown: {msg}")
         self.q_eng_add_element(DEF_CMD.EXIT)
 
     def log(self, command, res):
         command = DEF_CMD(command).value
-        self.logger.info(f"{command} -> {res}")
-
-    # def start(self):
-    #     self.event_shutdown.set()
+        params = {
+            "params": {
+                "command": command,
+                "response": res,
+            }
+        }
+        self.logger.info("CMD", extra=params)
 
     def procedure_append(self, procedure: Procedure):
         self.q_eng_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
@@ -147,7 +149,6 @@ class Framework:
 
     def wait_shutdown(self):
         while not self.event_shutdown.is_set():
-            # framework.logger.info(f"waiting: {time.monotonic()}")
             time.sleep(0.5)
 
     def start_api_server(self):
@@ -156,8 +157,11 @@ class Framework:
         run_server()
         pass
 
-    def get_time(self):
+    def get_time_monotonic(self):
         return time.monotonic()
+
+    def get_time_datetime(self):
+        return datetime.now()
 
 
 framework = Framework()

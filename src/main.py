@@ -7,8 +7,8 @@ try:
 
     SHOULD_APPEND_PROCEDURE = True
     if SHOULD_APPEND_PROCEDURE:
-        project = Project()
-        project.export(framework)
+        project = Project(framework)
+        project.export()
 
     SHOULD_START_API_SERVER = False
     if SHOULD_START_API_SERVER:
