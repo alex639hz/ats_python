@@ -18,18 +18,13 @@ from instruments.types.instrument_power_supply import PowerSupply
 from instruments.types.instrument_dmm import Dmm
 from instruments.types.instrument_scope import Scope
 from presets.power_integrity import TestBuilderPowerSupply
-from project.duts import *
+from project.dut import *
+from project.template import *
 
 LABEL_CREATE_SESSION = "create_session"
 LABEL_PREPARE_TEST = "prepare_test"
-LABEL_TESTER = "tester"
 
 logger = logging.getLogger("[user]")
-
-LABEL_NONE = None
-LABEL_NAME = "__name__"
-COLLECTION_SESSION = "session"
-COLLECTION_CASE = "case"
 
 
 class Project:
@@ -51,9 +46,9 @@ class Project:
                 "my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1"
             )
         builder.add_step_function(self.runtime_pre_exec, NOARG, LABEL_NAME)
-        builder.add_step_function(self.runtime_exec, NOARG, LABEL_NAME)
-        builder.add_step_function(self.runtime_post_exec, NOARG, LABEL_NAME)
-        builder.add_step_exit("SESSION COMPLETED")
+        # builder.add_step_function(self.runtime_exec, NOARG, LABEL_NAME)
+        # builder.add_step_function(self.runtime_post_exec, NOARG, LABEL_NAME)
+        # builder.add_step_exit("COMPLETED")
 
         procedure = builder.generate_procedure().start()
         self.framework.procedure_append(procedure)
@@ -122,45 +117,11 @@ class Project:
         case_label = case["label"]
 
         if case_type == "testA":
-            case_builder = ProcedureBuilder(case_label)
-            USE_WORKER = False
-            if USE_WORKER:
-                TIMEOUT_IN_SECONDS = 5
-                case_builder.add_step_worker_start(
-                    "my_worker1", self.my_worker, {"11": "world"}
-                )
-                case_builder.add_step_worker_wait(
-                    "my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1"
-                )
-            case_builder.add_step_function(self.runtime_set_thermal, NOARG, LABEL_NAME)
-            # case_builder.add_step_function(self.runtime_set_dut, NOARG, LABEL_NAME)
-            # case_builder.add_step_function(self.runtime_measure, NOARG, LABEL_NAME)
-            case_builder.add_step_exit(f"{case_label} COMPLETED")
-
-            case_procedure = case_builder.generate_procedure().start()
+            template_a = TemplateA()
+            case_procedure = template_a.get_procedure()
             self.framework.procedure_append(case_procedure)
-            self.framework.context.attribute_set("case_procedure", case_procedure)
+            # self.framework.context.attribute_set("case_procedure", case_procedure)
 
-        return DEF_OK
-
-    def runtime_set_thermal(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        start_at_key = "start_At"
-        start_at = procedure.context.attribute_get(start_at_key)
-        # if start_at == None:
-        # start_at = datetime.now()
-        # else:
-        # start_at += 1
-
-        procedure.context.attribute_set(start_at_key, start_at)
-
-        SHOULD_WAIT = 10
-
-        if SHOULD_WAIT:
-            procedure.nextstate_stay()
-            return "WAITING"
-
-        procedure.nextstate_next()
         return DEF_OK
 
     def runtime_exec(self, step_interface: StepInterface):

@@ -33,10 +33,10 @@ class Context:
         }
         self._context = context
         return self._context
-    
+
     def get_context(self):
         return self._context
-    
+
     def attribute_set(self, name, value):
         """Sets the session data for the procedure."""
         self._context[name] = value
@@ -55,5 +55,8 @@ class Context:
 
         return self
 
-    def attribute_get(self, name) -> Any:
-        return self._context.get(name)
+    def attribute_get(self, name, default=None) -> Any:
+        value = self._context.get(name)
+        if value == None:
+            value = default
+        return value

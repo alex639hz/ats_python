@@ -16,7 +16,7 @@ from engine.db import database
 from instruments.instrument_repo import repository
 from instruments.instrument_factory import instrument_factory
 
-DEF_ENG_INTERVAL_SECONDS = 0.001
+DEF_ENG_INTERVAL_SECONDS = 10
 DEF_Q_SIZE = 1_000_000
 
 USE_JSON_INSTRUMENT = True
@@ -24,9 +24,7 @@ USE_LOGGING = True
 
 
 class Framework:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # self.instruments_repo = self.repository
         self.q_eng: queue.Queue = queue.Queue(DEF_Q_SIZE)
         self.q_log: queue.Queue = queue.Queue(DEF_Q_SIZE)
@@ -44,7 +42,7 @@ class Framework:
         #     self.logger = empty_get_logger()
 
         if USE_JSON_INSTRUMENT:
-            self.q_eng_add_element(
+            self.q_add_element(
                 DEF_CMD.INIT_INSTRUMENTS_FROM_JSON,
                 {"path": "C:/ats_python/src/project/instruments.json"},
             )
@@ -57,8 +55,11 @@ class Framework:
 
     def _thread_method(self):
         while not self.event_shutdown.is_set():
+            time.sleep(0.25)
             try:
-                element = self.q_eng.get(block=True, timeout=DEF_ENG_INTERVAL_SECONDS)
+                element = self.q_eng.get(
+                    block=True, timeout=DEF_ENG_INTERVAL_SECONDS * 1000
+                )
                 command, args = Utils.q_element_get_params(element)
                 self._command_processor(command, args)
             except queue.Empty:
@@ -84,11 +85,11 @@ class Framework:
     def _procedure_processor(self, procedure: Procedure):
         procedure.execution_processor(self)
 
-    def q_eng_add_element(self, element: DEF_CMD, args=None):
+    def q_add_element(self, element: DEF_CMD, args=None):
         self.q_eng.put(Utils.q_element_create(element.value, args))
 
     def call_shutdown(self, msg=""):
-        self.q_eng_add_element(DEF_CMD.EXIT)
+        self.q_add_element(DEF_CMD.EXIT)
 
     def log(self, command, res):
         command = DEF_CMD(command).value
@@ -101,7 +102,7 @@ class Framework:
         self.logger.info("CMD", extra=params)
 
     def procedure_append(self, procedure: Procedure):
-        self.q_eng_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
+        self.q_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
 
     def _command_handlers(self, func_name: DEF_CMD):
         def func(args):
@@ -138,11 +139,37 @@ class Framework:
 
             return DEF_OK
 
+        def procedure_awake(args={}):
+            # start_at = 0
+            # sleep_seconds = 0
+            procedure: Procedure = args["procedure"]
+            start_at: float = args["start_at"]
+            sleep_seconds: float = args["sleep_seconds"]
+            now = self.get_time_monotonic()
+            delta = now - start_at
+            params = {
+                "params": {
+                    "now": now,
+                    "start_at": start_at,
+                    "delta": delta,
+                }
+            }
+            # self.logger.info("@@@@@", extra=params)
+            if delta > sleep_seconds:
+                procedure.start()
+            else:
+                self.q_add_element(
+                    DEF_CMD.PROCEDURE_AWAKE,
+                    args,
+                )
+            return
+
         func_dict = {
             DEF_CMD.INIT_INSTRUMENTS_FROM_JSON: load_instruments_json,
             DEF_CMD.PROCEDURE_PLAY: func,
             DEF_CMD.PROCEDURE_PAUSE: func,
             DEF_CMD.PROCEDURE_APPEND: add_new_procedure,
+            DEF_CMD.PROCEDURE_AWAKE: procedure_awake,
             DEF_CMD.EXIT: exit,
         }
         return func_dict[func_name]
@@ -157,10 +184,12 @@ class Framework:
         run_server()
         pass
 
-    def get_time_monotonic(self):
+    @staticmethod
+    def get_time_monotonic():
         return time.monotonic()
 
-    def get_time_datetime(self):
+    @staticmethod
+    def get_time_datetime():
         return datetime.now()
 
 

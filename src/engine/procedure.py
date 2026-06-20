@@ -141,7 +141,21 @@ class Procedure:
     def nextstate_next(self):
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
 
-    def nextstate_stay(self):
+    def _sleep(self, sleep_seconds):
+        if sleep_seconds != None:
+            start_at = self.framework.get_time_monotonic()
+            self.stop()
+            self.framework.q_add_element(
+                DEF_CMD.PROCEDURE_AWAKE,
+                {
+                    "procedure": self,
+                    "start_at": start_at,
+                    "sleep_seconds": sleep_seconds,
+                },
+            )
+
+    def nextstate_stay(self, sleep_seconds=None):
+        self._sleep(sleep_seconds)
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
 
     def nextstate_jump_by_label(self, label: str):
