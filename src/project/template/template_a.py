@@ -1,6 +1,6 @@
 from engine.constants import *
 from engine.procedure_builder import ProcedureBuilder
-from engine.types import *
+from project.types import *
 from engine.utils import *
 from engine.framework import framework
 
@@ -16,7 +16,7 @@ class TemplateA:
         case_builder.add_step_function(self.runtime_set_thermal, NOARG, LABEL_NAME)
         # case_builder.add_step_function(self.runtime_set_dut, NOARG, LABEL_NAME)
         # case_builder.add_step_function(self.runtime_measure, NOARG, LABEL_NAME)
-        case_builder.add_step_exit(f"COMPLETED")
+        # case_builder.add_step_exit(f"COMPLETED")
 
         case_procedure = case_builder.generate_procedure().start()
         return case_procedure

@@ -9,7 +9,7 @@ from engine.constants import *
 from engine.globals import *
 
 if TYPE_CHECKING:
-    from engine.types import *
+    from project.types import *
 
 logger = logging.getLogger("utils")
 

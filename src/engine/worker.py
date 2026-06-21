@@ -1,7 +1,7 @@
 import threading
 from typing import TYPE_CHECKING, Callable
 
-from engine.types import StepInterface
+from project.types import StepInterface
 from engine.utils import Utils
 
 if TYPE_CHECKING:

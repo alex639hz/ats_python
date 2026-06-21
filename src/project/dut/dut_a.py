@@ -1,5 +1,5 @@
 from engine.constants import *
-from engine.types import *
+from project.types import *
 from engine.utils import *
 
 

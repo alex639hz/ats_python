@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "main",
+            "name": "psv",
             "type": "debugpy",
             "request": "launch",
             "program": "src/main.py",
@@ -17,20 +17,6 @@
             "request": "launch",
             "program": "src/engine/instruments/virtual/virtual_scope.py",
             "console": "integratedTerminal"
-        },
-        {
-            "name": "playground",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "C:/ATS/src/eldrotec_control.py",
-            "console": "integratedTerminal",
-            "args": [
-                "start",
-                "192.168.0.7:9080",
-                "TA",
-                "65",
-                "RBR"
-            ]
-        },
+        }
     ]
 }

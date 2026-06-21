@@ -13,6 +13,7 @@ from engine.utils import Utils
 from engine.constants import *
 from engine.procedure import Procedure
 from engine.db import database
+from engine.server.server_main import run_server
 
 DEF_ENG_INTERVAL_SECONDS = 10
 DEF_Q_SIZE = 1_000_000
@@ -154,7 +155,6 @@ class Framework:
             time.sleep(0.5)
 
     def start_api_server(self):
-        from server.server_main import run_server
 
         run_server()
         pass

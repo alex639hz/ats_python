@@ -4,7 +4,6 @@ import uvicorn
 
 
 from engine.utils import Utils
-from server.server_api import server
 
 # logger = logging.getLogger("main")
 
@@ -13,6 +12,8 @@ PORT = 8088
 
 
 def _run_server():
+    from engine.server.server_api import server
+
     uvicorn.run(server, host=HOST, port=PORT, log_level="info")
 
 

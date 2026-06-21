@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Any, Tuple, NewType, TypeAlias, TypedDict
 
-from instruments.types.instrument_scope import Scope
-from instruments.types.instrument_dmm import Dmm
-from instruments.types.instrument_power_supply import PowerSupply
+from project.instruments.types.instrument_scope import Scope
+from project.instruments.types.instrument_dmm import Dmm
+from project.instruments.types.instrument_power_supply import PowerSupply
 
 if TYPE_CHECKING:
     from engine.procedure import Procedure
