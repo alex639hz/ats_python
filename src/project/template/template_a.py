@@ -49,4 +49,4 @@ class TemplateA:
             return "WAITING"
 
         procedure.nextstate_next()
-        return "HOLLLLLLLLLLLLLLLLAAAA"  # DEF_OK
+        return DEF_OK

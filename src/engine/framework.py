@@ -55,10 +55,10 @@ class Framework:
 
     def _thread_method(self):
         while not self.event_shutdown.is_set():
-            time.sleep(0.25)
+            time.sleep(0.1)
             try:
                 element = self.q_eng.get(
-                    block=True, timeout=DEF_ENG_INTERVAL_SECONDS * 1000
+                    block=False, timeout=DEF_ENG_INTERVAL_SECONDS * 1000
                 )
                 command, args = Utils.q_element_get_params(element)
                 self._command_processor(command, args)
