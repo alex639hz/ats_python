@@ -1,8 +1,8 @@
-from instruments.instrument import Instrument
-from instruments.virtual.virtual_base import VirtualInstrumentBase
+from project.instruments.instrument import Instrument
+from project.instruments.virtual.virtual_base import VirtualInstrumentBase
 
 
-class VirtualPowerSupply(VirtualInstrumentBase):
+class VirtualDmm(VirtualInstrumentBase):
 
     def __init__(self, instrument: Instrument):
         super().__init__(instrument)
@@ -14,7 +14,7 @@ class VirtualPowerSupply(VirtualInstrumentBase):
         cmd = cmd.strip().upper()
 
         if cmd == "*IDN?":
-            return b"V-PS 1.0\n"
+            return b"V-DMM-1.0\n"
 
         if cmd == "*TST?":
             return b"Test OK\n"

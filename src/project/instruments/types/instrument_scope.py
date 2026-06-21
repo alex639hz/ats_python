@@ -9,8 +9,8 @@ import numpy as np
 # from engine.utils import Utils
 
 # from engine.instruments.instrument import Instrument
-from instruments.instrument import Instrument
-from instruments.instrument_repo import repository
+from project.instruments.instrument import Instrument
+from project.instruments.instrument_repo import repository
 
 logger = logging.getLogger("[scope]")
 

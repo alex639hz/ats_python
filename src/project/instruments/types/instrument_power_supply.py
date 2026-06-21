@@ -2,8 +2,8 @@ import time
 import logging
 from engine.constants import STEP
 from engine.utils import Utils
-from instruments.instrument import Instrument
-from instruments.instrument_repo import repository
+from project.instruments.instrument import Instrument
+from project.instruments.instrument_repo import repository
 
 logger = logging.getLogger("instrument_power")
 

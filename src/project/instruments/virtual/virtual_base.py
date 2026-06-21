@@ -1,5 +1,5 @@
 import math
-from instruments.instrument import Instrument
+from project.instruments.instrument import Instrument
 import logging
 
 logger = logging.getLogger("[V_Scope]")

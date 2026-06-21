@@ -1,9 +1,9 @@
 import math
 import time
-from instruments.instrument import Instrument
+from project.instruments.instrument import Instrument
 import logging
 
-from instruments.virtual.virtual_base import VirtualInstrumentBase
+from project.instruments.virtual.virtual_base import VirtualInstrumentBase
 
 logger = logging.getLogger("[virtual_scope]")
 

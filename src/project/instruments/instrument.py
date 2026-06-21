@@ -14,15 +14,15 @@ from pyvisa.resources import MessageBasedResource
 from enum import Enum
 from engine.globals import *
 from engine.utils import Utils
-from instruments.instrument_repo import repository
-from instruments.instrument_type import InstrumentType
+from project.instruments.instrument_repo import repository
+from project.instruments.instrument_type import InstrumentType
 
-import instruments.virtual.virtual_instrument_server as v_server
+import project.instruments.virtual.virtual_instrument_server as v_server
 
 if TYPE_CHECKING:
-    from instruments.types.instrument_power_supply import PowerSupply
-    from instruments.types.instrument_scope import Scope
-    from instruments.types.instrument_dmm import Dmm
+    from project.instruments.types.instrument_power_supply import PowerSupply
+    from project.instruments.types.instrument_scope import Scope
+    from project.instruments.types.instrument_dmm import Dmm
 
 logger = logging.getLogger("[instrument]")
 
@@ -330,7 +330,7 @@ class Instrument:
     def virtual_server_start_single(self) -> None:
 
         def start_virtual_instrument() -> None:
-            from instruments.virtual.virtual_instrument_factory import (
+            from project.instruments.virtual.virtual_instrument_factory import (
                 virtual_instrument_factory,
             )
 

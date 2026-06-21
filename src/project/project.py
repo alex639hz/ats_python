@@ -13,10 +13,10 @@ from engine.constants import *
 # from instruments.instrument import Instrument
 from engine.types import StepInterface
 from engine.utils import Utils
-from instruments.instrument_repo import repository
-from instruments.types.instrument_power_supply import PowerSupply
-from instruments.types.instrument_dmm import Dmm
-from instruments.types.instrument_scope import Scope
+from project.instruments.instrument_repo import repository
+from project.instruments.types.instrument_power_supply import PowerSupply
+from project.instruments.types.instrument_dmm import Dmm
+from project.instruments.types.instrument_scope import Scope
 from presets.power_integrity import TestBuilderPowerSupply
 from project.dut import *
 from project.template import *
@@ -86,6 +86,17 @@ class Project:
             procedure.context.attribute_set("case", case)
 
         def setup_env():
+
+            def initialize_instruments(_path):
+                path: Path = Path(_path)
+                with path.open(encoding="utf-8") as f:
+                    json_payload = json.load(f)
+
+                # TODO does instrument_by_label required? check repository instead
+                for instrument in json_payload:
+                    repository.instrument_factory(instrument)
+
+            initialize_instruments(f"C:/ats_python/src/project/instruments.json")
             dmm: Dmm = repository.get_instrument_by_label("dmm")
             ps: PowerSupply = repository.get_instrument_by_label("ps")
 

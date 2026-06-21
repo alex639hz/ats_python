@@ -1,8 +1,14 @@
 import logging
 from typing import TYPE_CHECKING, Any
 
+# from instruments.instrument_repo import repository
+
+# from engine.instruments.types.instrument_thermal_head import InstrumentThermalHead
+
+# AnyInstrument = InstrumentDmm | InstrumentPowerSupply | InstrumentScope
+
 if TYPE_CHECKING:
-    from instruments.instrument import Instrument
+    from project.instruments.instrument import Instrument
 
 # if TYPE_CHECKING:
 #     from engine.instruments.instrument_factory import AnyInstrument
@@ -51,6 +57,34 @@ class InstrumentRepo:
                 f"incorrect instrument type: {instrument._label} is not an instance of {instance.__name__}"
             )
         return True
+
+    def instrument_factory(self, instrument={}):
+
+        from project.instruments.instrument_type import InstrumentType
+        from project.instruments.types.instrument_dmm import Dmm
+        from project.instruments.types.instrument_power_supply import PowerSupply
+        from project.instruments.types.instrument_scope import Scope
+
+        existing_instrument = repository.get_by_label(instrument["label"])
+        if existing_instrument:
+            return existing_instrument
+
+        instrument_type = instrument["type"]
+        if instrument_type == InstrumentType.DMM.value:
+            new_instrument = Dmm(instrument)
+        elif instrument_type == InstrumentType.PS.value:
+            new_instrument = PowerSupply(instrument)
+        elif instrument_type == InstrumentType.SCOPE.value:
+            new_instrument = Scope(instrument)
+        elif instrument_type == InstrumentType.THERMAL_HEAD.value:
+            # return InstrumentThermalHead(instrument)
+            pass
+        else:
+            raise Exception(f"Unknown instrument type: {instrument_type}")
+
+        self.add(new_instrument)
+
+        return new_instrument
 
 
 repository = InstrumentRepo()

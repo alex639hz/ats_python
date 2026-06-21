@@ -2,7 +2,7 @@
 # from engine.utils import Utils
 
 # from typing import TYPE_CHECKING
-from instruments.instrument import Instrument
+from project.instruments.instrument import Instrument
 
 # if TYPE_CHECKING:
 

@@ -1,9 +1,9 @@
 # from virtual.virtual_scope import VirtualScope
-from instruments.instrument import Instrument
-from instruments.instrument_type import InstrumentType
-from instruments.virtual.virtual_dmm import VirtualDmm
-from instruments.virtual.virtual_scope import VirtualScope
-from instruments.virtual.virtual_power_supply import VirtualPowerSupply
+from project.instruments.instrument import Instrument
+from project.instruments.instrument_type import InstrumentType
+from project.instruments.virtual.virtual_dmm import VirtualDmm
+from project.instruments.virtual.virtual_scope import VirtualScope
+from project.instruments.virtual.virtual_power_supply import VirtualPowerSupply
 
 
 def virtual_instrument_factory(instrument: Instrument):
