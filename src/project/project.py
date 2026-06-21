@@ -17,7 +17,7 @@ from project.instruments.instrument_repo import repository
 from project.instruments.types.instrument_power_supply import PowerSupply
 from project.instruments.types.instrument_dmm import Dmm
 from project.instruments.types.instrument_scope import Scope
-from presets.power_integrity import TestBuilderPowerSupply
+from project.presets.power_integrity import TestBuilderPowerSupply
 from project.dut import *
 from project.template import *
 
