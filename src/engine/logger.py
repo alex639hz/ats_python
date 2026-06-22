@@ -79,11 +79,22 @@ class NDJsonFormatter(logging.Formatter):
 # =========================
 def setup_logging(q_log):
     # --- Ensure log directory exists
-    LOG_FOLDER.mkdir(parents=True, exist_ok=True)
+    file_handler = None
+    try:
+        LOG_FOLDER.mkdir(parents=True, exist_ok=True)
 
-    # --- Delete log file on startup (BEFORE handlers)
-    if DELETE_LOG_ON_STARTUP and LOG_FILE.exists():
-        LOG_FILE.unlink()
+        # --- Delete log file on startup (BEFORE handlers)
+        if DELETE_LOG_ON_STARTUP and LOG_FILE.exists():
+            LOG_FILE.unlink()
+
+        file_handler = RotatingFileHandler(
+            filename=str(LOG_FILE),  # logging expects str
+            maxBytes=LOG_MAX_BYTES,
+            backupCount=LOG_BACKUP_COUNT,
+            encoding="utf-8",
+        )
+    except PermissionError:
+        file_handler = None
 
     root = logging.getLogger()
     root.setLevel(LOG_LEVEL_CONSOLE)
@@ -96,21 +107,18 @@ def setup_logging(q_log):
     console_handler.setLevel(LOG_LEVEL_CONSOLE)
     console_handler.setFormatter(formatter)
     #
+    handlers = [console_handler]
+
     # --- File handler (absolute path)
-    file_handler = RotatingFileHandler(
-        filename=str(LOG_FILE),  # logging expects str
-        maxBytes=LOG_MAX_BYTES,
-        backupCount=LOG_BACKUP_COUNT,
-        encoding="utf-8",
-    )
-    file_handler.setLevel(LOG_LEVEL_FILE)
-    file_handler.setFormatter(formatter)
+    if file_handler is not None:
+        file_handler.setLevel(LOG_LEVEL_FILE)
+        file_handler.setFormatter(formatter)
+        handlers.append(file_handler)
 
     # --- Queue listener owns real handlers
     listener = QueueListener(
         q_log,
-        console_handler,
-        file_handler,
+        *handlers,
         respect_handler_level=True,
     )
 

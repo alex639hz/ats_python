@@ -1,17 +1,25 @@
 # import time
-# import logging
-import uvicorn
+import logging
+
+try:
+    import uvicorn
+except ModuleNotFoundError:
+    uvicorn = None
 
 
 from engine.utils import Utils
 
-# logger = logging.getLogger("main")
+logger = logging.getLogger("main")
 
 HOST = "127.0.0.1"
 PORT = 8088
 
 
 def _run_server():
+    if uvicorn is None:
+        logger.warning("uvicorn is not installed; API server was not started")
+        return
+
     from engine.server.server_api import server
 
     uvicorn.run(server, host=HOST, port=PORT, log_level="info")

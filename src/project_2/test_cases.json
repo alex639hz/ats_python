@@ -1,0 +1,29 @@
+[
+  {
+    "label": "aapl_trend_following",
+    "symbol": "AAPL",
+    "short_window": 3,
+    "long_window": 5,
+    "momentum_window": 3,
+    "buy_momentum_pct": 1.0,
+    "sell_momentum_pct": -1.0
+  },
+  {
+    "label": "msft_trend_following",
+    "symbol": "MSFT",
+    "short_window": 3,
+    "long_window": 5,
+    "momentum_window": 3,
+    "buy_momentum_pct": 1.0,
+    "sell_momentum_pct": -1.0
+  },
+  {
+    "label": "tsla_trend_following",
+    "symbol": "TSLA",
+    "short_window": 3,
+    "long_window": 5,
+    "momentum_window": 3,
+    "buy_momentum_pct": 2.0,
+    "sell_momentum_pct": -2.0
+  }
+]

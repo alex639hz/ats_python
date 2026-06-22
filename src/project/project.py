@@ -11,7 +11,6 @@ from engine.db import database
 from engine.constants import *
 
 # from instruments.instrument import Instrument
-from project.types import StepInterface
 from engine.utils import Utils
 from project.instruments.instrument_repo import repository
 from project.instruments.types.instrument_power_supply import PowerSupply
