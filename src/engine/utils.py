@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Final
 from pathlib import Path
 from engine.constants import *
 from engine.globals import *
+from engine.types import StepInterface
 
 if TYPE_CHECKING:
     from project.types import *
