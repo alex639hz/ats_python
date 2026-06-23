@@ -15,7 +15,8 @@ from engine.procedure import Procedure
 from engine.db import database
 from engine.server.server_main import run_server
 
-DEF_ENG_INTERVAL_SECONDS = 10
+PROCESSOR_SECONDS_DELAY = 0.001
+DEF_ENG_INTERVAL_SECONDS = 0
 DEF_Q_SIZE = 1_000_000
 
 USE_LOGGING = True
@@ -43,7 +44,7 @@ class Framework:
 
     def _thread_method(self):
         while not self.event_shutdown.is_set():
-            time.sleep(0.1)
+            time.sleep(PROCESSOR_SECONDS_DELAY)
             try:
                 element = self.q_eng.get(
                     block=False, timeout=DEF_ENG_INTERVAL_SECONDS * 1000
@@ -60,37 +61,9 @@ class Framework:
         if not callable(handler):
             raise Exception(f"invalid command: {command}")
         res = handler(args)
-        self.log(command, res)
+        args["result"] = res
+        self.log(command, args)
         return
-
-    def _procedure_loop(self):
-        for procedure in self._procedure_list:
-            should_run = procedure.is_running()
-            self._procedure_processor(procedure) if should_run else None
-
-        return
-
-    def _procedure_processor(self, procedure: Procedure):
-        procedure.execution_processor(self)
-
-    def q_add_element(self, element: DEF_CMD, args=None):
-        self.q_eng.put(Utils.q_element_create(element.value, args))
-
-    def call_shutdown(self, msg=""):
-        self.q_add_element(DEF_CMD.EXIT)
-
-    def log(self, command, res):
-        command = DEF_CMD(command).value
-        params = {
-            "params": {
-                "command": command,
-                "response": res,
-            }
-        }
-        self.logger.info("CMD", extra=params)
-
-    def procedure_append(self, procedure: Procedure):
-        self.q_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
 
     def _command_handlers(self, func_name: DEF_CMD):
         def func(args):
@@ -124,21 +97,17 @@ class Framework:
             sleep_seconds: float = args["sleep_seconds"]
             now = self.get_time_monotonic()
             delta = now - start_at
-            params = {
-                "params": {
-                    "now": now,
-                    "start_at": start_at,
-                    "delta": delta,
-                }
-            }
-            # self.logger.info("@@@@@", extra=params)
             if delta > sleep_seconds:
+                # TODO call q_eng.set("start_procedure",procedure)
                 procedure.start()
             else:
+
+                # q_timer.q_add_element(
                 self.q_add_element(
                     DEF_CMD.PROCEDURE_AWAKE,
                     args,
                 )
+            procedure.logger.info(f"--->>>> {procedure.get_label()}")
             return
 
         func_dict = {
@@ -149,6 +118,35 @@ class Framework:
             DEF_CMD.EXIT: exit,
         }
         return func_dict[func_name]
+
+    def _procedure_loop(self):
+        for procedure in self._procedure_list:
+            should_run = procedure.is_running()
+            self._procedure_processor(procedure) if should_run else None
+
+        return
+
+    def _procedure_processor(self, procedure: Procedure):
+        procedure.execution_processor(self)
+
+    def q_add_element(self, element: DEF_CMD, args=None):
+        self.q_eng.put(Utils.q_element_create(element.value, args))
+
+    def call_shutdown(self, msg=""):
+        self.q_add_element(DEF_CMD.EXIT)
+
+    def log(self, command, args):
+        command = DEF_CMD(command).value
+        params = {
+            "params": {
+                "command": command,
+                # "response": args,
+            }
+        }
+        self.logger.info("CMD", extra=params)
+
+    def procedure_append(self, procedure: Procedure):
+        self.q_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
 
     def wait_shutdown(self):
         while not self.event_shutdown.is_set():

@@ -7,9 +7,9 @@ from engine.framework import framework
 
 class TemplateA:
 
-    def __init__(self):
+    def __init__(self, label):
         self.reg_store: dict[Any, int] = {}
-        self.name = "template_a"
+        self.name = label
 
     def get_procedure(self):
         case_builder = ProcedureBuilder(self.name)

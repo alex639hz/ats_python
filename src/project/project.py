@@ -127,9 +127,18 @@ class Project:
         case_label = case["label"]
 
         if case_type == "testA":
-            template_a = TemplateA()
+            template_a = TemplateA("template_aaa")
             case_procedure = template_a.get_procedure()
             self.framework.procedure_append(case_procedure)
+
+            template_b = TemplateA("template_bbb")
+            case_procedure = template_b.get_procedure()
+            self.framework.procedure_append(case_procedure)
+
+            template_c = TemplateA("template_ccc")
+            case_procedure = template_c.get_procedure()
+            self.framework.procedure_append(case_procedure)
+
             # self.framework.context.attribute_set("case_procedure", case_procedure)
 
         return DEF_OK
