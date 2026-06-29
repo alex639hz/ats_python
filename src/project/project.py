@@ -1,13 +1,10 @@
-from datetime import datetime
 import logging
 import time
 
 # from engine import utils
-from engine import procedure
 from engine.framework import Framework
 from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
-from engine.db import database
 from engine.constants import *
 
 # from instruments.instrument import Instrument
@@ -17,7 +14,7 @@ from project.instruments.types.instrument_power_supply import PowerSupply
 from project.instruments.types.instrument_dmm import Dmm
 from project.instruments.types.instrument_scope import Scope
 from project.presets.power_integrity import TestBuilderPowerSupply
-from project.dut import *
+from project.dut.dut_a import DutA
 from project.template import *
 
 LABEL_CREATE_SESSION = "create_session"
@@ -34,6 +31,7 @@ class Project:
         self.case = self.cases[self.case_index]
         self.dut = DutA()
         self.framework = framework
+        self.test_proc: Procedure
 
     def export(self):
         builder = ProcedureBuilder("main_proc")
@@ -44,7 +42,9 @@ class Project:
             builder.add_step_worker_wait(
                 "my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1"
             )
-        builder.add_step_function(self.runtime_pre_exec, NOARG, LABEL_NAME)
+        builder.step_call(self.runtime_init_env, label="init env")
+        builder.step_call(self.runtime_call_template, label="launch test proc")
+        builder.step_call(self.runtime_exec, label="wait test proc completion")
         # builder.add_step_function(self.runtime_exec, NOARG, LABEL_NAME)
         # builder.add_step_function(self.runtime_post_exec, NOARG, LABEL_NAME)
         # builder.add_step_exit("COMPLETED")
@@ -52,7 +52,22 @@ class Project:
         procedure = builder.generate_procedure().start()
         self.framework.procedure_append(procedure)
 
-    def runtime_pre_exec(self, step_interface: StepInterface):
+    def runtime_call_template(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        case = procedure.context.attribute_get("case")["case"]
+        case_type = case["test_type"]
+        case_label = case["label"]
+
+        if case_type == "testA":
+            template_a = TemplateA("test_A")
+            case_procedure = template_a.get_procedure()
+            self.framework.procedure_append(case_procedure)
+            self.test_proc = case_procedure
+        else:
+            raise Exception("case type error")
+            # self.framework.context.attribute_set("case_procedure", case_procedure)
+
+    def runtime_init_env(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         created_at = self.framework.get_time_datetime()
 
@@ -106,49 +121,26 @@ class Project:
             self.dut.register_write(self.dut.REG1, self.dut.REG1_SETUP_C)
             self.dut.bit_write(self.dut.BIT0, self.dut.BIT_ON)
 
-        # create session db
-        ###################
         create_session()
 
-        # create test db
-        ################
         create_case()
 
-        # instrument setup
-        ##################
         setup_env()
 
-        # dut setup
-        ##################
         setup_dut()
-
-        case = procedure.context.attribute_get("case")["case"]
-        case_type = case["test_type"]
-        case_label = case["label"]
-
-        if case_type == "testA":
-            template_a = TemplateA("template_aaa")
-            case_procedure = template_a.get_procedure()
-            self.framework.procedure_append(case_procedure)
-
-            template_b = TemplateA("template_bbb")
-            case_procedure = template_b.get_procedure()
-            self.framework.procedure_append(case_procedure)
-
-            template_c = TemplateA("template_ccc")
-            case_procedure = template_c.get_procedure()
-            self.framework.procedure_append(case_procedure)
-
-            # self.framework.context.attribute_set("case_procedure", case_procedure)
 
         return DEF_OK
 
     def runtime_exec(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        scope: Scope = repository.get_instrument_by_label("scope")
-        volt_rms = scope.measure_volt_rms()
-        results = {"volt_rms": volt_rms}
-        procedure.context.attribute_set("result", results)
+        test_a = procedure.framework.procedure_get_by_label("test_A")
+        is_running = test_a.is_running()
+        if is_running:
+            procedure.nextstate_stay()
+            return
+
+        res = test_a.context.attribute_get("result")
+        pass
 
     def runtime_post_exec(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)

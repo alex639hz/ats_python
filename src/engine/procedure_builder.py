@@ -1,6 +1,6 @@
 import sys
 from time import time
-from typing import TYPE_CHECKING , Callable
+from typing import TYPE_CHECKING, Callable
 
 from engine.constants import *
 from engine.utils import *
@@ -37,14 +37,14 @@ class ProcedureBuilder:
     def add_step_exit(self, msg=""):
         self.append_step(STEP.EXIT, NOARG, msg)
 
-    def add_step_function(self, function: Callable, args, label):
+    def step_call(self, function: Callable, args=NOARG, label="__name__"):
         step_args = {
             STEP_ARG.FUNCTION: function,
             STEP_ARG.ARGS: args,
         }
-        
-        label = function.__name__  if label == "__name__" else label
-                      
+
+        label = function.__name__ if label == "__name__" else label
+
         self.append_step(
             STEP.FUNCTION_CALL,
             step_args,
@@ -74,6 +74,3 @@ class ProcedureBuilder:
             step_args,
             label,
         )
-
-    def merge(another_builder:ProcedureBuilder):
-        self.steps.append(another_builder.steps)

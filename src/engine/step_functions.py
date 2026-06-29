@@ -43,7 +43,9 @@ def function_call(procedure: Procedure):
 def delay_start(procedure: Procedure):
     now = framework.get_time_monotonic()
     procedure.context.attribute_set(DEF_PROC_PARAM.TIMESTAMP, now)
-    return DEF_OK
+    duration = procedure.get_active_step().get_args().get(STEP_ARG.DURATION_SECONDS)
+
+    return f"sleeping: {duration}"
 
 
 def delay_check(procedure: Procedure):
@@ -59,7 +61,7 @@ def delay_check(procedure: Procedure):
         return ""
 
     procedure.nextstate_next()
-    return f"sleep %0.1f seconds completed" % delta
+    return f"sleep completed"
 
 
 def worker_start(procedure: Procedure):

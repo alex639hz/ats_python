@@ -104,6 +104,22 @@ class Procedure:
         self._is_running = False
         return self
 
+    def _sleep(self, sleep_seconds):
+        if sleep_seconds != None:
+            start_at = self.framework.get_time_monotonic()
+            self.stop()
+            self.framework.q_add_element(
+                DEF_CMD.PROCEDURE_AWAKE,
+                {
+                    "procedure": self,
+                    "start_at": start_at,
+                    "sleep_seconds": sleep_seconds,
+                },
+            )
+
+    def call_init(self):
+        self.framework.q_add_element(DEF_CMD.PROCEDURE_INIT, {"procedure": self})
+
     def _nextstate_processor(self):
 
         final_index = len(self._steps) - 1
@@ -117,6 +133,8 @@ class Procedure:
             self.stop()
         elif nextstate_op == DEF_NEXTSTATE_OP.STAY:
             pass
+        elif nextstate_op == DEF_NEXTSTATE_OP.INIT:
+            self.call_init()
         elif nextstate_op == DEF_NEXTSTATE_OP.PAUSE:
             self.stop()
         elif nextstate_op == DEF_NEXTSTATE_OP.JUMP:
@@ -131,28 +149,17 @@ class Procedure:
 
         return self
 
-    def nextstate_init(self):
-        self._nextstate = (DEF_NEXTSTATE_OP.PAUSE, None)
+    def nextstate_init(self, sleep_seconds=None):
+        self._sleep(sleep_seconds)
+        self._nextstate = (DEF_NEXTSTATE_OP.INIT, None)
         return self._nextstate
 
     def nextstate_set(self, nextstate_op: DEF_NEXTSTATE_OP, idx=0):
         self._nextstate = (nextstate_op, idx)
 
-    def nextstate_next(self):
+    def nextstate_next(self, sleep_seconds=None):
+        self._sleep(sleep_seconds)
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
-
-    def _sleep(self, sleep_seconds):
-        if sleep_seconds != None:
-            start_at = self.framework.get_time_monotonic()
-            self.stop()
-            self.framework.q_add_element(
-                DEF_CMD.PROCEDURE_AWAKE,
-                {
-                    "procedure": self,
-                    "start_at": start_at,
-                    "sleep_seconds": sleep_seconds,
-                },
-            )
 
     def nextstate_stay(self, sleep_seconds=None):
         self._sleep(sleep_seconds)

@@ -3,6 +3,7 @@ from engine.procedure_builder import ProcedureBuilder
 from project.types import *
 from engine.utils import *
 from engine.framework import framework
+from project.instruments.instrument_repo import repository
 
 
 class TemplateA:
@@ -11,9 +12,17 @@ class TemplateA:
         self.reg_store: dict[Any, int] = {}
         self.name = label
 
+    def runtime_exec(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        scope: Scope = repository.get_instrument_by_label("scope")
+        volt_rms = scope.measure_volt_rms()
+        results = {"volt_rms": volt_rms}
+        procedure.context.attribute_set("result", results)
+
     def get_procedure(self):
         case_builder = ProcedureBuilder(self.name)
-        case_builder.add_step_function(self.runtime_set_thermal, NOARG, LABEL_NAME)
+        case_builder.step_call(self.runtime_set_thermal)
+        case_builder.step_call(self.runtime_exec)
         # case_builder.add_step_function(self.runtime_set_dut, NOARG, LABEL_NAME)
         # case_builder.add_step_function(self.runtime_measure, NOARG, LABEL_NAME)
         # case_builder.add_step_exit(f"COMPLETED")

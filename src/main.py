@@ -2,7 +2,7 @@ from engine.framework import framework
 
 try:
 
-    SELECTED_PROJECT = "project_"
+    SELECTED_PROJECT = "project_1"
 
     SHOULD_APPEND_PROCEDURE = True
     if SHOULD_APPEND_PROCEDURE:

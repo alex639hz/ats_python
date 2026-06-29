@@ -15,8 +15,7 @@ from engine.procedure import Procedure
 from engine.db import database
 from engine.server.server_main import run_server
 
-PROCESSOR_SECONDS_DELAY = 0.001
-DEF_ENG_INTERVAL_SECONDS = 0
+PROCESSOR_SECONDS_DELAY = 0.2
 DEF_Q_SIZE = 1_000_000
 
 USE_LOGGING = True
@@ -43,14 +42,13 @@ class Framework:
         return "framework 0.0.1"
 
     def _thread_method(self):
+        INTERVAL_SECONDS = 0
+
         while not self.event_shutdown.is_set():
             time.sleep(PROCESSOR_SECONDS_DELAY)
             try:
-                element = self.q_eng.get(
-                    block=False, timeout=DEF_ENG_INTERVAL_SECONDS * 1000
-                )
-                command, args = Utils.q_element_get_params(element)
-                self._command_processor(command, args)
+                element = self.q_eng.get(block=False, timeout=INTERVAL_SECONDS * 1000)
+                self._command_processor(element["command"], element["payload"])
             except queue.Empty:
                 pass
             self._procedure_loop()
@@ -67,6 +65,9 @@ class Framework:
 
     def _command_handlers(self, func_name: DEF_CMD):
         def func(args):
+            pass
+
+        def procedure_init(args):
             pass
 
         def add_new_procedure(args={}):
@@ -111,6 +112,7 @@ class Framework:
             return
 
         func_dict = {
+            DEF_CMD.PROCEDURE_INIT: procedure_init,
             DEF_CMD.PROCEDURE_PLAY: func,
             DEF_CMD.PROCEDURE_PAUSE: func,
             DEF_CMD.PROCEDURE_APPEND: add_new_procedure,
@@ -147,6 +149,10 @@ class Framework:
 
     def procedure_append(self, procedure: Procedure):
         self.q_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
+
+    def procedure_get_by_label(self, label) -> Procedure:
+        index = self._procedure_dict[label]
+        return self._procedure_list[index]
 
     def wait_shutdown(self):
         while not self.event_shutdown.is_set():

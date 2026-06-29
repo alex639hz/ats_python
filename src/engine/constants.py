@@ -20,6 +20,7 @@ class DEF_CMD(Enum):
     PROCEDURE_PAUSE = "PROCEDURE_PAUSE"
     PROCEDURE_APPEND = "PROCEDURE_APPEND"
     PROCEDURE_AWAKE = "PROCEDURE_AWAKE"
+    PROCEDURE_INIT = "PROCEDURE_INIT"
     EXIT = "EXIT"
 
 
@@ -91,14 +92,14 @@ class STEP_ARG(Enum):
 
 class DEF_NEXTSTATE_OP(Enum):
 
-    WAIT = "WAIT"  # repeat current step again
+    INIT = "INIT"  # init current procedure
+    EXIT = "EXIT"  # remove procedure from framework
     STAY = "STAY"  # repeat current step again
     NEXT = "NEXT"  # continue to next state
     JUMP = "JUMP"  # jump to step by label
     ERROR = "ERROR"  # enter error state TODO define
     PAUSE = "PAUSE"  # pause procedure - set should_run to false
     PLAY = "PLAY"  # continue to execute procedure - set should_run to true
-    EXIT = "EXIT"  # exit procedure - set should_run to true
 
 
 class VisaCommandReturnType(Enum):

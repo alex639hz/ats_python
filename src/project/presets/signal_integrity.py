@@ -45,12 +45,8 @@ class SignalIntegrityTests:
     def eye_diagram_analysis(label: str) -> Procedure:
         """Eye Diagram Analysis — Assess signal integrity by analyzing eye diagrams for timing and voltage margins."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -59,12 +55,8 @@ class SignalIntegrityTests:
     def jitter_measurement(label: str) -> Procedure:
         """Jitter Measurement — Evaluate the timing variations in the signal."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -73,12 +65,8 @@ class SignalIntegrityTests:
     def rise_fall_time_validation(label: str) -> Procedure:
         """Rise/Fall Time Validation — Measure the time it takes for the signal to transition between logic levels."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -87,12 +75,8 @@ class SignalIntegrityTests:
     def overshoot_undershoot_validation(label: str) -> Procedure:
         """Overshoot/Undershoot Validation — Check for excessive voltage excursions beyond the expected logic levels."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -101,12 +85,8 @@ class SignalIntegrityTests:
     def ringing_validation(label: str) -> Procedure:
         """Ringing Validation — Assess the presence of oscillations in the signal."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -115,9 +95,7 @@ class SignalIntegrityTests:
     def crosstalk_validation(label: str) -> Procedure:
         """Crosstalk Validation — Evaluate interference between adjacent signal lines."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
         procedure = procedure_template.generate_procedure()
 
         return procedure
@@ -126,9 +104,7 @@ class SignalIntegrityTests:
     def impedance_matching_validation(label: str) -> Procedure:
         """Impedance Matching Validation — Ensure the characteristic impedance of the transmission line matches the load impedance."""
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
 
         procedure = procedure_template.generate_procedure()
 
@@ -139,9 +115,7 @@ class SignalIntegrityTests:
         """Receiver Sensitivity Validation — Measure the minimum input signal level that can be reliably detected."""
 
         procedure_template = ProcedureBuilder(label)
-        procedure_template.add_step_function(
-            fcall_template, NOARG, "pre-test configuration"
-        )
+        procedure_template.step_call(fcall_template, NOARG, "pre-test configuration")
 
         procedure = procedure_template.generate_procedure()
 

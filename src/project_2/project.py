@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 from statistics import mean
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from engine.constants import DEF_OK, LABEL_NAME, NOARG
 from engine.procedure_builder import ProcedureBuilder
@@ -17,6 +17,37 @@ logger = logging.getLogger("[stock_analytics]")
 
 PROJECT_FOLDER = Path("C:/ats_python/src/project_2")
 OUTPUT_FOLDER = PROJECT_FOLDER / "output"
+MINUTES_DELAY_BETWEEN_DATA_FETCH = 0.1
+
+
+class DataProvider:
+    def __init__(self, domain) -> None:
+        self.api_key = ""
+        self.domain = domain
+
+    def fetch_data(self):
+        return []
+
+
+class DataProviderAlpaca(DataProvider):
+    def __init__(self, domain) -> None:
+        super().__init__(domain)
+
+    def fetch_data(self):
+        return []
+
+
+class DataProcessor:
+    def __init__(self, domain) -> None:
+        self.domain = domain
+
+
+class DataProcessor1(DataProcessor):
+    def __init__(self, domain) -> None:
+        super().__init__(domain)
+
+    def analyze(self):
+        return None
 
 
 class Project2:
@@ -26,15 +57,45 @@ class Project2:
         self.framework = framework
         self.cases = Utils.read_json(PROJECT_FOLDER / "test_cases.json")
         self.market_data = Utils.read_json(PROJECT_FOLDER / "market_data.json")
+        self.build_processor = Callable[..., Any]
+        self.build_analyzer = Callable[..., Any]
 
     def export(self):
-        builder = ProcedureBuilder("stock_analytics")
-        builder.add_step_function(self.runtime_create_session, NOARG, LABEL_NAME)
-        builder.add_step_function(self.runtime_analyze_cases, NOARG, LABEL_NAME)
-        builder.add_step_function(self.runtime_export_report, NOARG, LABEL_NAME)
 
-        procedure = builder.generate_procedure().start()
-        self.framework.procedure_append(procedure)
+        builder_1 = ProcedureBuilder("data_collect")
+        builder_1.step_call(self.runtime_data_collect)
+        builder_1.add_step_delay(MINUTES_DELAY_BETWEEN_DATA_FETCH * 60)
+        procedure_1 = builder_1.generate_procedure().start()
+        self.framework.procedure_append(procedure_1)
+
+        def build_data_processor(data_id):
+            builder = ProcedureBuilder("data_process")
+            builder.step_call(self.runtime_data_process, {"data_id": data_id})
+            procedure = builder.generate_procedure()
+            self.framework.procedure_append(procedure)
+            return
+
+        self.build_processor = build_data_processor
+
+    def runtime_data_collect(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        # get new data
+        provider = DataProviderAlpaca("www.alpaca.market")
+        data_id = provider.fetch_data()
+
+        procedure.nextstate_init()
+
+        pass
+
+    def runtime_data_process(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+
+        processor = DataProcessor1("data_id")
+        processor.analyze()
+
+        procedure.nextstate_init()
+
+        pass
 
     def runtime_create_session(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
