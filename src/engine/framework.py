@@ -23,8 +23,9 @@ USE_LOGGING = True
 
 class Framework:
     def __init__(self):
-        self.q_eng: queue.Queue = queue.Queue(DEF_Q_SIZE)
-        self.q_log: queue.Queue = queue.Queue(DEF_Q_SIZE)
+        self.q_eng: queue.Queue = self.q_create(DEF_Q_SIZE)
+        self.q_log: queue.Queue = self.q_create(DEF_Q_SIZE)
+        self.q_list: list[queue.Queue] = []
         self.event_shutdown = threading.Event()
         self._procedure_list: list["Procedure"] = []
         self._procedure_dict: dict[str, int] = {}
@@ -65,7 +66,7 @@ class Framework:
 
     def _command_handlers(self, func_name: DEF_CMD):
         def func(args):
-            pass
+            "null func"
 
         def procedure_init(args):
             pass
@@ -108,7 +109,7 @@ class Framework:
                     DEF_CMD.PROCEDURE_AWAKE,
                     args,
                 )
-            procedure.logger.info(f"--->>>> {procedure.get_label()}")
+            # procedure.logger.info(f"--->>>> {procedure.get_label()}")
             return
 
         func_dict = {
@@ -139,10 +140,11 @@ class Framework:
 
     def log(self, command, args):
         command = DEF_CMD(command).value
+        res = args["result"]
         params = {
             "params": {
                 "command": command,
-                # "response": args,
+                "result": res,
             }
         }
         self.logger.info("CMD", extra=params)
@@ -162,6 +164,11 @@ class Framework:
 
         run_server()
         pass
+
+    def q_create(self, size=1_000_000):
+        q = queue.Queue(size)
+        self.q_list.append(q)
+        return q
 
     @staticmethod
     def get_time_monotonic():
