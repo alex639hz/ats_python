@@ -33,7 +33,7 @@ class Step:
                 "msg": msg,
             }
         }
-        procedure.logger.info(msg, extra=params)
+        procedure.logger.info("STP", extra=params)
         return
 
     def get_arg(self, key):

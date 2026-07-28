@@ -58,6 +58,8 @@ class Procedure:
         step = self.get_active_step()
         self.nextstate_next()  # Default
         res = step.func(self)
+        framework.logger.info("-222 execution_processor")
+
         try:
             pass
         except Exception as e:

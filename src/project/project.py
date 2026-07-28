@@ -1,4 +1,5 @@
 import logging
+import queue
 import time
 
 # from engine import utils
@@ -32,6 +33,9 @@ class Project:
         self.dut = DutA()
         self.framework = framework
         self.test_proc: Procedure
+        self.qs_dict: dict[str, queue.Queue] = {}
+        self.qs_dict["data_raw"] = framework.q_create()
+        self.qs_dict["data_normal"] = framework.q_create()
 
     def export(self):
         builder = ProcedureBuilder("main_proc")
@@ -42,12 +46,18 @@ class Project:
             builder.add_step_worker_wait(
                 "my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1"
             )
-        builder.step_call(self.runtime_init_env, label="init env")
-        builder.step_call(self.runtime_call_template, label="launch test proc")
-        builder.step_call(self.runtime_exec, label="wait test proc completion")
-        # builder.add_step_function(self.runtime_exec, NOARG, LABEL_NAME)
-        # builder.add_step_function(self.runtime_post_exec, NOARG, LABEL_NAME)
-        # builder.add_step_exit("COMPLETED")
+
+        EXAMPLE_1 = False
+        if EXAMPLE_1:
+            builder.step_call(self.runtime_init_env, label="init env")
+            builder.step_call(self.runtime_call_template, label="launch test proc")
+            builder.step_call(
+                self.runtime_get_raw_logs, label="wait test proc completion"
+            )
+
+        EXAMPLE_2 = True
+        if EXAMPLE_2:
+            builder.step_call(self.runtime_init_env)
 
         procedure = builder.generate_procedure().start()
         self.framework.procedure_append(procedure)
@@ -150,6 +160,16 @@ class Project:
         res = procedure.db.update_one(
             COLLECTION_CASE, {"_id": case_id}, {"result": result}
         )
+
+    def runtime_get_raw_logs(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        q_out: queue.Queue = self.qs_dict["data_raw"]
+
+        data = [0, 1, 2, 3]
+
+        q_out.put(data)
+
+        pass
 
     @staticmethod
     def my_worker(step_interface: StepInterface):

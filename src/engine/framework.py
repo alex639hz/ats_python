@@ -15,7 +15,6 @@ from engine.procedure import Procedure
 from engine.db import database
 from engine.server.server_main import run_server
 
-PROCESSOR_SECONDS_DELAY = 0.2
 DEF_Q_SIZE = 1_000_000
 
 USE_LOGGING = True
@@ -23,8 +22,8 @@ USE_LOGGING = True
 
 class Framework:
     def __init__(self):
-        self.q_eng: queue.Queue = queue.Queue(DEF_Q_SIZE)
-        self.q_log: queue.Queue = queue.Queue(DEF_Q_SIZE)
+        self.q_eng: queue.Queue = self.q_create(DEF_Q_SIZE)
+        self.q_log: queue.Queue = self.q_create(DEF_Q_SIZE)
         self.event_shutdown = threading.Event()
         self._procedure_list: list["Procedure"] = []
         self._procedure_dict: dict[str, int] = {}
@@ -36,22 +35,27 @@ class Framework:
             self.logger = logging.getLogger("[framework]")
 
         self.engine_thread = Utils.thread_define("engineThread", self._thread_method)
+
+    def _thread_method(self):
+        PROCESSOR_RATE = 5  # maximum iterations per second
+
+        while not self.event_shutdown.is_set():
+            try:
+                element = self.q_eng.get(block=True, timeout=1 / PROCESSOR_RATE)
+                self._command_processor(element["command"], element["payload"])
+                framework.logger.info(
+                    f"-111 _thread_method {element["command"]}, {element["payload"]}"
+                )
+                continue
+            except queue.Empty:
+                pass
+                self._procedure_loop()
+
+    def start(self):
         self.engine_thread.start()
 
     def get_label(self):
         return "framework 0.0.1"
-
-    def _thread_method(self):
-        INTERVAL_SECONDS = 0
-
-        while not self.event_shutdown.is_set():
-            time.sleep(PROCESSOR_SECONDS_DELAY)
-            try:
-                element = self.q_eng.get(block=False, timeout=INTERVAL_SECONDS * 1000)
-                self._command_processor(element["command"], element["payload"])
-            except queue.Empty:
-                pass
-            self._procedure_loop()
 
     def _command_processor(self, command, args={}):
         command = DEF_CMD(command)
@@ -59,13 +63,13 @@ class Framework:
         if not callable(handler):
             raise Exception(f"invalid command: {command}")
         res = handler(args)
-        args["result"] = res
+        # args["result"] = res # produces error  TypeError: 'NoneType' object does not support item assignment
         self.log(command, args)
         return
 
     def _command_handlers(self, func_name: DEF_CMD):
         def func(args):
-            pass
+            return "null func"
 
         def procedure_init(args):
             pass
@@ -108,7 +112,6 @@ class Framework:
                     DEF_CMD.PROCEDURE_AWAKE,
                     args,
                 )
-            procedure.logger.info(f"--->>>> {procedure.get_label()}")
             return
 
         func_dict = {
@@ -139,10 +142,11 @@ class Framework:
 
     def log(self, command, args):
         command = DEF_CMD(command).value
+        # res = args["result"]
         params = {
             "params": {
                 "command": command,
-                # "response": args,
+                # "result": res,
             }
         }
         self.logger.info("CMD", extra=params)
@@ -163,6 +167,10 @@ class Framework:
         run_server()
         pass
 
+    def q_create(self, size=1_000_000):
+        q = queue.Queue(size)
+        return q
+
     @staticmethod
     def get_time_monotonic():
         return time.monotonic()
@@ -173,3 +181,4 @@ class Framework:
 
 
 framework = Framework()
+framework.start()

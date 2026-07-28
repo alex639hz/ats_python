@@ -16,7 +16,7 @@ try:
             project = Project(framework)
         project.export()
 
-    SHOULD_START_API_SERVER = True
+    SHOULD_START_API_SERVER = False
     if SHOULD_START_API_SERVER:
         framework.start_api_server()
 
