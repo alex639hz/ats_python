@@ -82,16 +82,13 @@ class Project:
         created_at = self.framework.get_time_datetime()
 
         def create_session():
-            global session
             session = {
                 "created_at": created_at,
                 "label": procedure.get_label(),
                 "cases": self.cases,
             }
             res = procedure.db.insert_one(COLLECTION_SESSION, session)
-            session_id = res.inserted_id
-
-            procedure.context.attribute_set("session_id", session_id)
+            session["_id"] = res.inserted_id
             procedure.context.attribute_set("session", session)
 
         def create_case():

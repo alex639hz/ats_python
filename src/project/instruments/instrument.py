@@ -11,7 +11,6 @@ from io import BufferedWriter
 from pathlib import Path
 from pyvisa.resources import MessageBasedResource
 from enum import Enum
-from engine.globals import *
 from engine.utils import Utils
 from project.instruments.instrument_repo import repository
 from project.instruments.instrument_type import InstrumentType
@@ -175,57 +174,58 @@ class Instrument:
         # with self._lock:
         scpi_operation, scpi_cmd, callback = scpi_req
 
-        self.connection.read_termination = DEF_TERMINATION_NONE
+        # self.connection.read_termination = DEF_TERMINATION_NONE
 
         # TODO session context should be provided in the queue
-        session = global_context.get_session()
-        active_procedure = session.get(DEF_GLOBAL_SESSION_FIELDS.ACTIVE_PROCEDURE)
+        # session = global_context.get_session()
+        # active_procedure = session.get(DEF_GLOBAL_SESSION_FIELDS.ACTIVE_PROCEDURE)
 
         # procedure_label = Utils.procedure_get_label(active_procedure)
         ##################################################################
 
-        base_path1: str = global_context.get_field_by_section_and_key(
-            DEF_GLOBAL_SECTIONS.PATHS,
-            DEF_GLOBAL_PATHS.RECORDS_BASE_PATH,
-        )
+        # base_path1: str = global_context.get_field_by_section_and_key(
+        #     DEF_GLOBAL_SECTIONS.PATHS,
+        #     DEF_GLOBAL_PATHS.RECORDS_BASE_PATH,
+        # )
 
-        session_label: str = (
-            global_context.get_field_by_section_and_key(
-                DEF_GLOBAL_SECTIONS.SESSION,
-                DEF_GLOBAL_SESSION_FIELDS.SESSION_LABEL,
-            )
-            or "my-session"
-        )
-
-        ##################################################################
-
-        now_ts = int(time.time())
-        time_suffix = datetime.fromtimestamp(now_ts).strftime("%y_%m_%d_%H%M%S")
-
-        base_filepath: Path = (
-            Path(base_path1)
-            # / session_label
-            # / procedure_label
-            # / time_suffix
-            # / self._label
-            / "data"
-        )
-
-        bin_filepath = base_filepath.with_suffix(".bin")
-        bin_filepath.parent.mkdir(parents=True, exist_ok=True)
+        # session_label: str = (
+        #     global_context.get_field_by_section_and_key(
+        #         DEF_GLOBAL_SECTIONS.SESSION,
+        #         DEF_GLOBAL_SESSION_FIELDS.SESSION_LABEL,
+        #     )
+        #     or "my-session"
+        # )
 
         ##################################################################
 
-        with open(bin_filepath, "wb") as binary_file:
-            self.connection.write(scpi_cmd)
-            self.stream_scpi_to_binary(binary_file)
+        # now_ts = int(time.time())
+        # time_suffix = datetime.fromtimestamp(now_ts).strftime("%y_%m_%d_%H%M%S")
 
-        INCLUDE_TEXT = False
-        if INCLUDE_TEXT:
-            # self.convert_bin_to_txt(bin_filepath, bin_filepath.with_suffix(".txt"))
-            pass
-        # log_msg = f"{self._label}\t{scpi_cmd}\t{str(bin_filepath)}"
-        return bin_filepath
+        # base_filepath: Path = (
+        #     Path(base_path1)
+        # / session_label
+        # / procedure_label
+        # / time_suffix
+        # / self._label
+        # / "data"
+        # )
+
+        # bin_filepath = base_filepath.with_suffix(".bin")
+        # bin_filepath.parent.mkdir(parents=True, exist_ok=True)
+
+        # ##################################################################
+
+        # with open(bin_filepath, "wb") as binary_file:
+        #     self.connection.write(scpi_cmd)
+        #     self.stream_scpi_to_binary(binary_file)
+
+        # INCLUDE_TEXT = False
+        # if INCLUDE_TEXT:
+        #     # self.convert_bin_to_txt(bin_filepath, bin_filepath.with_suffix(".txt"))
+        #     pass
+        # # log_msg = f"{self._label}\t{scpi_cmd}\t{str(bin_filepath)}"
+        # return bin_filepath
+        pass
 
     # =================================================
     # convert_bin_to_txt

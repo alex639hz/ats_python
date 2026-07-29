@@ -43,9 +43,6 @@ class Framework:
             try:
                 element = self.q_eng.get(block=True, timeout=1 / PROCESSOR_RATE)
                 self._command_processor(element["command"], element["payload"])
-                framework.logger.info(
-                    f"-111 _thread_method {element["command"]}, {element["payload"]}"
-                )
                 continue
             except queue.Empty:
                 pass
