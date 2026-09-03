@@ -1,9 +1,10 @@
+"""Author: Alex Zvuluny | Email: alex.639hz@gmail.com"""
+
 import logging
-import queue
 import time
 
 # from engine import utils
-from engine.framework import Framework
+from engine.framework import framework
 from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
 from engine.constants import *
@@ -18,64 +19,48 @@ from project.presets.power_integrity import TestBuilderPowerSupply
 from project.dut.dut_a import DutA
 from project.template import *
 
-LABEL_CREATE_SESSION = "create_session"
+LABEL_SESSION = "create_session"
 LABEL_PREPARE_TEST = "prepare_test"
-
+SHOULD_EXPORT_BASE_PROJECT = True
 logger = logging.getLogger("[user]")
 
 
-class Project:
-
-    def __init__(self, framework: Framework) -> None:
+class BaseProject:
+    def __init__(self) -> None:
+        self.framework = framework
         self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
         self.case_index = 0
         self.case = self.cases[self.case_index]
         self.dut = DutA()
-        self.framework = framework
-        self.test_proc: Procedure
-        self.qs_dict: dict[str, queue.Queue] = {}
-        self.qs_dict["data_raw"] = framework.q_create()
-        self.qs_dict["data_normal"] = framework.q_create()
+
+    pass
 
     def export(self):
-        builder = ProcedureBuilder("main_proc")
-        USE_WORKER = False
-        if USE_WORKER:
-            TIMEOUT_IN_SECONDS = 5
-            builder.add_step_worker_start("my_worker1", self.my_worker, {"11": "world"})
-            builder.add_step_worker_wait(
-                "my_worker1", TIMEOUT_IN_SECONDS, "wait_worker1"
-            )
-
-        EXAMPLE_1 = False
-        if EXAMPLE_1:
-            builder.step_call(self.runtime_init_env, label="init env")
-            builder.step_call(self.runtime_call_template, label="launch test proc")
-            builder.step_call(
-                self.runtime_get_raw_logs, label="wait test proc completion"
-            )
-
-        EXAMPLE_2 = True
-        if EXAMPLE_2:
-            builder.step_call(self.runtime_init_env)
+        builder = ProcedureBuilder("sub_proc_example")
+        builder.step_call(self.runtime_init_env)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
+        builder.step_call(self.runtime_demo_step)
 
         procedure = builder.generate_procedure().start()
         self.framework.procedure_append(procedure)
 
-    def runtime_call_template(self, step_interface: StepInterface):
+    def runtime_demo_step(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        case = procedure.context.attribute_get("case")["case"]
-        case_type = case["test_type"]
-        case_label = case["label"]
+        value = procedure.get_active_step().get_op().value
+        print(f"hello: {value}")
 
-        if case_type == "testA":
-            template_a = TemplateA("test_A")
-            case_procedure = template_a.get_procedure()
-            self.framework.procedure_append(case_procedure)
-            self.test_proc = case_procedure
-        else:
-            raise Exception("case type error")
-            # self.framework.context.attribute_set("case_procedure", case_procedure)
+        pass
 
     def runtime_init_env(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
@@ -93,7 +78,7 @@ class Project:
 
         def create_case():
             session = procedure.context.attribute_get("session")
-            session_id = procedure.context.attribute_get("session_id")
+            session_id = session["_id"]
             selected_case = session["cases"][0]
 
             case = {
@@ -138,6 +123,62 @@ class Project:
 
         return DEF_OK
 
+
+class Project(BaseProject):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        if SHOULD_EXPORT_BASE_PROJECT:
+            self.export()
+
+        builder = ProcedureBuilder("main_proc_example")
+
+        EXAMPLE_2 = True
+        if EXAMPLE_2:
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+            builder.step_call(self.runtime_demo_step)
+
+        procedure = builder.generate_procedure().start()
+        self.framework.procedure_append(procedure)
+
+    # def export(self):
+
+    def runtime_demo_step_v2(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        value = procedure.get_active_step().get_op().value
+        print(f"hello: {value}")
+        WAIT_SECONDS = 3
+        procedure.nextstate_next(WAIT_SECONDS)
+        print(f"world: {value}")
+        pass
+
+    def runtime_call_template(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        case = procedure.context.attribute_get("case")["case"]
+        case_type = case["test_type"]
+        case_label = case["label"]
+
+        if case_type == "testA":
+            template_a = TemplateA("test_A")
+            case_procedure = template_a.get_procedure()
+            self.framework.procedure_append(case_procedure)
+            self.test_proc = case_procedure
+        else:
+            raise Exception("case type error")
+            # self.framework.context.attribute_set("case_procedure", case_procedure)
+
     def runtime_exec(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         test_a = procedure.framework.procedure_get_by_label("test_A")
@@ -157,16 +198,6 @@ class Project:
         res = procedure.db.update_one(
             COLLECTION_CASE, {"_id": case_id}, {"result": result}
         )
-
-    def runtime_get_raw_logs(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        q_out: queue.Queue = self.qs_dict["data_raw"]
-
-        data = [0, 1, 2, 3]
-
-        q_out.put(data)
-
-        pass
 
     @staticmethod
     def my_worker(step_interface: StepInterface):

@@ -55,15 +55,13 @@ class Procedure:
         return worker
 
     def execution_processor(self, framework: Framework):
-        step = self.get_active_step()
-        self.nextstate_next()  # Default
-        res = step.func(self)
-        framework.logger.info("-222 execution_processor")
-
         try:
+            step = self.get_active_step()
+            self.nextstate_next()  # Default
+            res = step.func(self)
             pass
         except Exception as e:
-            msg = f"step exception: {step.get_label() or step.func.__name__} {e}"
+            msg = f"step exception: {step.get_label() or step.func.__name__ or "No step"} {e}"
             self.nextstate_exit(msg)
             return
 

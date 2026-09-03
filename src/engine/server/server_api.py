@@ -1,3 +1,5 @@
+"""Author: Alex Zvuluny | Email: alex.639hz@gmail.com"""
+
 import threading
 from fastapi import FastAPI, Request, HTTPException
 from engine.server.routes.routes_general import routerGeneral

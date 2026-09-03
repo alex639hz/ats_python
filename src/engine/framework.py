@@ -1,3 +1,5 @@
+"""Author: Alex Zvuluny | Email: alex.639hz@gmail.com"""
+
 from datetime import datetime
 from pathlib import Path
 import threading
@@ -13,7 +15,9 @@ from engine.utils import Utils
 from engine.constants import *
 from engine.procedure import Procedure
 from engine.db import database
-from engine.server.server_main import run_server
+from engine.server.server_main import Server
+
+# from engine.server.server_main import run_server
 
 DEF_Q_SIZE = 1_000_000
 
@@ -29,6 +33,7 @@ class Framework:
         self._procedure_dict: dict[str, int] = {}
         self.context: Context = Context(self)
         self.db = database
+        self.server = Server()
 
         if USE_LOGGING:
             self.log_listener = setup_logging(self.q_log)
@@ -160,8 +165,7 @@ class Framework:
             time.sleep(0.5)
 
     def start_api_server(self):
-
-        run_server()
+        self.server.run_server()
         pass
 
     def q_create(self, size=1_000_000):

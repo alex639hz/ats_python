@@ -1,5 +1,8 @@
-# import time
+"""Author: Alex Zvuluny | Email: alex.639hz@gmail.com"""
+
 import logging
+
+# Note: IN_CODE_IMPORT from engine.server.server_api import server
 
 try:
     import uvicorn
@@ -15,15 +18,22 @@ HOST = "127.0.0.1"
 PORT = 8088
 
 
-def _run_server():
-    if uvicorn is None:
-        logger.warning("uvicorn is not installed; API server was not started")
-        return
+class Server:
+    pass
 
-    from engine.server.server_api import server
+    def __init__(self) -> None:
+        self.host = HOST
+        self.port = PORT
+        self.server_thread = Utils.thread_define("server", self._run_server)
 
-    uvicorn.run(server, host=HOST, port=PORT, log_level="info")
+    def _run_server(self):
+        if uvicorn is None:
+            logger.warning("uvicorn is not installed; API server was not started")
+            return
 
+        from engine.server.server_api import server
 
-def run_server():
-    Utils.thread_define("server", _run_server).start()
+        uvicorn.run(server, host=HOST, port=PORT, log_level="info")
+
+    def run_server(self):
+        self.server_thread.start()
