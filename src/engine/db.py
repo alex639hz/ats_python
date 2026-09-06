@@ -1,4 +1,5 @@
 from datetime import datetime
+from engine.constants import *
 
 try:
     import pymongo
@@ -35,6 +36,10 @@ class Db:
 
     def insert_one(self, collection, update_doc):
         res = self._collection(collection).insert_one(update_doc)
+        return res
+
+    def create_session(self, session):
+        res = self._collection(COLLECTION_SESSION).insert_one(session)
         return res
 
     def find_by_id(self, collection, _id):

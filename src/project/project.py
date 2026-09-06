@@ -21,7 +21,7 @@ from project.template import *
 
 LABEL_SESSION = "create_session"
 LABEL_PREPARE_TEST = "prepare_test"
-SHOULD_EXPORT_BASE_PROJECT = True
+SHOULD_USE_BASE_PROJECT = False
 logger = logging.getLogger("[user]")
 
 
@@ -30,56 +30,54 @@ class BaseProject:
         self.framework = framework
         self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
         self.case_index = 0
-        self.case = self.cases[self.case_index]
         self.dut = DutA()
+
+        self.procedure_env_setup = ProcedureBuilder("env_setup")
 
     pass
 
-    def export(self):
-        builder = ProcedureBuilder("sub_proc_example")
-        builder.step_call(self.runtime_init_env)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
-        builder.step_call(self.runtime_demo_step)
+    def base_export(self, runtime_dut_init, runtime_test):
 
-        procedure = builder.generate_procedure().start()
-        self.framework.procedure_append(procedure)
+        self.procedure_env_setup.step_call(self.runtime_verify_hw)
+        self.procedure_env_setup.step_call(self.create_session)
+        self.procedure_env_setup.step_call(runtime_dut_init)
+        self.procedure_env_setup.step_call(self.runtime_set_thermal)
+        self.procedure_env_setup.step_call(runtime_test)
 
-    def runtime_demo_step(self, step_interface: StepInterface):
+        env_setup = self.procedure_env_setup.generate_procedure()
+        env_setup.start()
+        framework.procedure_append(env_setup)
+
+    def runtime_session_init(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         value = procedure.get_active_step().get_op().value
         print(f"hello: {value}")
-
+        procedure.nextstate_next(1)
         pass
 
-    def runtime_init_env(self, step_interface: StepInterface):
+    def create_session(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        created_at = self.framework.get_time_datetime()
 
-        def create_session():
-            session = {
-                "created_at": created_at,
-                "label": procedure.get_label(),
-                "cases": self.cases,
-            }
-            res = procedure.db.insert_one(COLLECTION_SESSION, session)
-            session["_id"] = res.inserted_id
-            procedure.context.attribute_set("session", session)
+        session = {
+            "created_at": self.framework.get_time_datetime(),
+            "label": procedure.get_label(),
+            "cases": self.cases,
+        }
+        res = procedure.db.create_session(session)
+        session["_id"] = res.inserted_id
+        procedure.context.attribute_set("session", session)
+
+    def runtime_set_thermal(self, step_interface: StepInterface):
+        pass
+
+    def runtime_verify_hw(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
 
         def create_case():
             session = procedure.context.attribute_get("session")
             session_id = session["_id"]
             selected_case = session["cases"][0]
+            created_at = self.framework.get_time_datetime()
 
             case = {
                 "created_at": created_at,
@@ -113,13 +111,11 @@ class BaseProject:
             self.dut.register_write(self.dut.REG1, self.dut.REG1_SETUP_C)
             self.dut.bit_write(self.dut.BIT0, self.dut.BIT_ON)
 
-        create_session()
+        # create_case()
 
-        create_case()
+        # setup_env()
 
-        setup_env()
-
-        setup_dut()
+        # setup_dut()
 
         return DEF_OK
 
@@ -129,39 +125,38 @@ class Project(BaseProject):
     def __init__(self) -> None:
         super().__init__()
 
-        if SHOULD_EXPORT_BASE_PROJECT:
-            self.export()
+        builder = ProcedureBuilder("dut_test")
 
-        builder = ProcedureBuilder("main_proc_example")
+        builder.step_call(self.runtime_demo_step_v2)
+        builder.step_call(self.runtime_demo_step_v3)
+        builder.step_call(self.runtime_demo_step_v2)
 
-        EXAMPLE_2 = True
-        if EXAMPLE_2:
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
-            builder.step_call(self.runtime_demo_step)
+        dut_test_procedure = builder.generate_procedure()
 
-        procedure = builder.generate_procedure().start()
-        self.framework.procedure_append(procedure)
+        if SHOULD_USE_BASE_PROJECT:
+            self.base_export(self.dut_init, self.dut_test)
+        else:
+            framework.procedure_append(dut_test_procedure)
+            dut_test_procedure.start()
 
-    # def export(self):
+    def dut_init(self):
+        pass
+
+    def dut_test(self):
+        pass
 
     def runtime_demo_step_v2(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        value = procedure.get_active_step().get_op().value
-        print(f"hello: {value}")
-        WAIT_SECONDS = 3
-        procedure.nextstate_next(WAIT_SECONDS)
-        print(f"world: {value}")
+        step_label = procedure.get_active_step().get_label()
+        framework.log_msg(f"----- hello step_label: {step_label}")
+        procedure.nextstate_next(5)
+        pass
+
+    def runtime_demo_step_v3(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        step_label = procedure.get_active_step().get_label()
+        framework.log_msg(f"+++++++ hello step_label: {step_label}")
+        procedure.nextstate_next(5)
         pass
 
     def runtime_call_template(self, step_interface: StepInterface):

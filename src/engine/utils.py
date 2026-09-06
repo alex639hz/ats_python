@@ -98,13 +98,6 @@ class Utils:
         return False
 
     @staticmethod
-    def q_element_create(cmd="", payload={}):
-        return {
-            "command": cmd,
-            "payload": payload,
-        }
-
-    @staticmethod
     def atomic_file_write_text(path: Path, data: str) -> None:
         """Atomically write text data to a file. This prevents partial writes and ensures that the file is either fully written or not modified at all."""
         tmp = path.with_suffix(path.suffix + ".tmp")

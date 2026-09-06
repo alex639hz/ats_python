@@ -108,17 +108,20 @@ class Procedure:
         if sleep_seconds != None:
             start_at = self.framework.get_time_monotonic()
             self.stop()
-            self.framework.q_add_element(
-                DEF_CMD.PROCEDURE_AWAKE,
-                {
-                    "procedure": self,
-                    "start_at": start_at,
-                    "sleep_seconds": sleep_seconds,
-                },
-            )
+
+            cmd = DEF_CMD.PROCEDURE_AWAKE.value
+            payload = {
+                "procedure": self,
+                "start_at": start_at,
+                "sleep_seconds": sleep_seconds,
+            }
+
+            self.framework.pipe_timer.element_push(cmd, payload)
 
     def call_init(self):
-        self.framework.q_add_element(DEF_CMD.PROCEDURE_INIT, {"procedure": self})
+        self.framework.pipe_eng.element_push(
+            DEF_CMD.PROCEDURE_INIT, {"procedure": self}
+        )
 
     def _nextstate_processor(self):
 
@@ -157,9 +160,9 @@ class Procedure:
     def nextstate_set(self, nextstate_op: DEF_NEXTSTATE_OP, idx=0):
         self._nextstate = (nextstate_op, idx)
 
-    def nextstate_next(self, sleep_seconds=None):
-        self._sleep(sleep_seconds)
+    def nextstate_next(self, sleep_seconds: float | None = None):
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
+        self._sleep(sleep_seconds)
 
     def nextstate_stay(self, sleep_seconds=None):
         self._sleep(sleep_seconds)
