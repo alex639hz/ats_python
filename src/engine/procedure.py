@@ -162,6 +162,7 @@ class Procedure:
 
     def nextstate_next(self, sleep_seconds: float | None = None):
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
+        self._sleep(sleep_seconds)
 
     def nextstate_wait_and_next(self, sleep_seconds: float | None = None):
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
