@@ -11,6 +11,7 @@ from typing import Any
 
 from engine.context import Context
 from engine.logger import setup_logging
+from engine.pipeline import Pipeline
 from engine.utils import Utils
 from engine.constants import *
 from engine.procedure import Procedure
@@ -26,8 +27,10 @@ USE_LOGGING = True
 
 class Framework:
     def __init__(self):
-        self.q_eng: queue.Queue = self.q_create(DEF_Q_SIZE)
-        self.q_log: queue.Queue = self.q_create(DEF_Q_SIZE)
+        # self.pipe_eng: queue.Queue = self.q_create(DEF_Q_SIZE)
+        self.pipe_eng = Pipeline(DEF_Q_SIZE, "engine")
+        self.pipe_timer = Pipeline(DEF_Q_SIZE, "timer")
+        self.pipe_log = Pipeline(DEF_Q_SIZE, "timer")
         self.event_shutdown = threading.Event()
         self._procedure_list: list["Procedure"] = []
         self._procedure_dict: dict[str, int] = {}
@@ -36,37 +39,84 @@ class Framework:
         self.server = Server()
 
         if USE_LOGGING:
-            self.log_listener = setup_logging(self.q_log)
+            self.log_listener = setup_logging(self.pipe_log.get_pipe())
             self.logger = logging.getLogger("[framework]")
 
-        self.engine_thread = Utils.thread_define("engineThread", self._thread_method)
+        self.engine_thread = Utils.thread_define("Engine", self._thread_engine)
+        self.engine_timer = Utils.thread_define("Timer", self._thread_timer)
 
-    def _thread_method(self):
-        PROCESSOR_RATE = 5  # maximum iterations per second
+    def _thread_engine(self):
+        PROCESSOR_RATE = 0.01
 
         while not self.event_shutdown.is_set():
             try:
-                element = self.q_eng.get(block=True, timeout=1 / PROCESSOR_RATE)
-                self._command_processor(element["command"], element["payload"])
+                element = self.pipe_eng.element_pop(block=True, timeout=PROCESSOR_RATE)
+                self._command_processor(element)
                 continue
             except queue.Empty:
                 pass
-                self._procedure_loop()
+            self._procedure_loop()
+
+    def _thread_timer(self):
+        INTERVAL_SECONDS = 0.2
+        arr = []
+        while not self.event_shutdown.is_set():
+            try:
+                element = None
+                element = self.pipe_timer.element_pop()
+                is_ready = self.check_timer(element)
+                if not is_ready:
+                    arr.append(element)
+                continue
+            except queue.Empty:
+                pass
+
+            for waiting_element in arr:
+                self.pipe_timer.element_push(
+                    waiting_element["command"], waiting_element["payload"]
+                )
+            arr = []
+            time.sleep(INTERVAL_SECONDS)
+
+    def check_timer(self, element):
+        # command = element["command"]
+        payload = element["payload"]
+        present_time = self.get_time_monotonic()
+        start_at = payload["start_at"]
+        future_time = start_at + payload["sleep_seconds"]
+
+        if present_time >= future_time:
+            # self.log_msg(
+            #     f"----->>>>>> check_timer: {present_time:.1f} {future_time:.1f}"
+            # )
+            procedure: Procedure = payload["procedure"]
+            procedure.start()
+            return True
+
+        return False
+
+        # self.log_msg(f"$$$$$$$$$$$$$$$$ {present_time}")
+        # if not present_time % 10:
+        #     element = self.q_timer.get(block=False)
+        #     # self._command_processor(element["command"], element["payload"])
+        #     pass
+        # return
 
     def start(self):
         self.engine_thread.start()
+        self.engine_timer.start()
 
     def get_label(self):
         return "framework 0.0.1"
 
-    def _command_processor(self, command, args={}):
-        command = DEF_CMD(command)
+    def _command_processor(self, element):
+        command = DEF_CMD(element["command"])
+        payload = element["payload"]
+        # command = DEF_CMD(command)
         handler = self._command_handlers(command)
         if not callable(handler):
             raise Exception(f"invalid command: {command}")
-        res = handler(args)
-        # args["result"] = res # produces error  TypeError: 'NoneType' object does not support item assignment
-        self.log(command, args)
+        res = handler(payload)
         return
 
     def _command_handlers(self, func_name: DEF_CMD):
@@ -107,10 +157,9 @@ class Framework:
             if delta > sleep_seconds:
                 # TODO call q_eng.set("start_procedure",procedure)
                 procedure.start()
+                pass
             else:
-
-                # q_timer.q_add_element(
-                self.q_add_element(
+                self.pipe_eng.element_push(
                     DEF_CMD.PROCEDURE_AWAKE,
                     args,
                 )
@@ -136,13 +185,16 @@ class Framework:
     def _procedure_processor(self, procedure: Procedure):
         procedure.execution_processor(self)
 
-    def q_add_element(self, element: DEF_CMD, args=None):
-        self.q_eng.put(Utils.q_element_create(element.value, args))
+    # def q_add_element(self, element: DEF_CMD, args=None):
+    # self.pipe_eng.put(Utils.q_element_create(element.value, args))
 
     def call_shutdown(self, msg=""):
-        self.q_add_element(DEF_CMD.EXIT)
+        self.pipe_eng.element_push(DEF_CMD.EXIT)
 
-    def log(self, command, args):
+    def log_msg(self, msg, params={}):
+        self.logger.info(msg, extra=params)
+
+    def log_command(self, command, args):
         command = DEF_CMD(command).value
         # res = args["result"]
         params = {
@@ -154,7 +206,7 @@ class Framework:
         self.logger.info("CMD", extra=params)
 
     def procedure_append(self, procedure: Procedure):
-        self.q_add_element(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
+        self.pipe_eng.element_push(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
 
     def procedure_get_by_label(self, label) -> Procedure:
         index = self._procedure_dict[label]
@@ -167,10 +219,6 @@ class Framework:
     def start_api_server(self):
         self.server.run_server()
         pass
-
-    def q_create(self, size=1_000_000):
-        q = queue.Queue(size)
-        return q
 
     @staticmethod
     def get_time_monotonic():
