@@ -65,7 +65,10 @@ class Framework:
                 element = None
                 element = self.pipe_timer.element_pop()
                 is_ready = self.check_timer(element)
-                if not is_ready:
+                if is_ready:
+                    procedure: Procedure = element["payload"]["procedure"]
+                    procedure.start()
+                else:
                     arr.append(element)
                 continue
             except queue.Empty:

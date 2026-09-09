@@ -21,7 +21,6 @@ from project.template import *
 
 LABEL_SESSION = "create_session"
 LABEL_PREPARE_TEST = "prepare_test"
-SHOULD_USE_BASE_PROJECT = False
 logger = logging.getLogger("[user]")
 
 
@@ -127,12 +126,14 @@ class Project(BaseProject):
 
         builder = ProcedureBuilder("dut_test")
 
-        builder.step_call(self.runtime_demo_step_v2)
-        builder.step_call(self.runtime_demo_step_v3)
+        builder.step_call(self.runtime_demo_init_once)
+        builder.step_call(self.runtime_demo_start_recorder)
+        builder.step_call(self.runtime_demo_init_in_loop)
         builder.step_call(self.runtime_demo_step_v4)
 
         dut_test_procedure = builder.generate_procedure()
 
+        SHOULD_USE_BASE_PROJECT = False
         if SHOULD_USE_BASE_PROJECT:
             self.base_export(self.dut_init, self.dut_test)
         else:
@@ -145,21 +146,45 @@ class Project(BaseProject):
     def dut_test(self):
         pass
 
-    def runtime_demo_step_v2(self, step_interface: StepInterface):
+    def runtime_demo_init_once(self, step_interface: StepInterface):
         # return
         procedure, args = Utils.extract_step_interface(step_interface)
         step_label = procedure.get_active_step().get_label()
-        framework.log_msg(f"----- hello step_label: {step_label}")
+        framework.log_msg(f"initialize all that can be set in one call: {step_label}")
         procedure.nextstate_next()
         pass
 
-    def runtime_demo_step_v3(self, step_interface: StepInterface):
+    def runtime_demo_init_in_loop(self, step_interface: StepInterface):
         # return
         procedure, args = Utils.extract_step_interface(step_interface)
         step_label = procedure.get_active_step().get_label()
-        framework.log_msg(f"+++++++ hello step_label: {step_label}")
         # procedure.nextstate_wait_and_repeat(5)
-        procedure.nextstate_wait_and_next(5)
+        second_counter = procedure.context.attribute_get("second_counter") or 0
+        second_counter += 1
+
+        if second_counter > 5:
+            return
+
+        procedure.context.attribute_set("second_counter", second_counter)
+        framework.log_msg(f"initialize in loop: {second_counter }")
+        procedure.nextstate_wait_and_repeat(3)
+        pass
+
+    def runtime_demo_start_recorder(self, step_interface: StepInterface):
+        # return
+
+        def thermal_read(step_interface: StepInterface):
+            procedure, args = Utils.extract_step_interface(step_interface)
+            step_label = procedure.get_active_step().get_label()
+            framework.log_msg(f"initialize all 8888888: {step_label}")
+            procedure.nextstate_wait_and_repeat(1)
+
+        builder = ProcedureBuilder("thermal_recorder")
+        builder.step_call(thermal_read)
+        recorder_procedure = builder.generate_procedure()
+        framework.procedure_append(recorder_procedure)
+        recorder_procedure.start()
+        framework.context.attribute_set("recorder_procedure", recorder_procedure)
         pass
 
     def runtime_demo_step_v4(self, step_interface: StepInterface):
@@ -169,6 +194,10 @@ class Project(BaseProject):
         framework.log_msg(f"^^^^^^^ hello v4 step_label: {""}")
         # procedure.nextstate_wait_and_repeat(5)
         # procedure.nextstate_wait_and_next(5)
+        recorder_procedure: Procedure = framework.context.attribute_get(
+            "recorder_procedure"
+        )
+        recorder_procedure.stop()
         pass
 
     def runtime_call_template(self, step_interface: StepInterface):

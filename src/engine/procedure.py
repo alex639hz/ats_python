@@ -104,7 +104,7 @@ class Procedure:
         self._is_running = False
         return self
 
-    def _sleep(self, sleep_seconds):
+    def stop_and_push_awake_request(self, sleep_seconds):
         if sleep_seconds != None:
             start_at = self.framework.get_time_monotonic()
             self.stop()
@@ -153,7 +153,7 @@ class Procedure:
         return self
 
     def nextstate_init(self, sleep_seconds=None):
-        self._sleep(sleep_seconds)
+        self.stop_and_push_awake_request(sleep_seconds)
         self._nextstate = (DEF_NEXTSTATE_OP.INIT, None)
         return self._nextstate
 
@@ -162,18 +162,18 @@ class Procedure:
 
     def nextstate_next(self, sleep_seconds: float | None = None):
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
-        self._sleep(sleep_seconds)
+        self.stop_and_push_awake_request(sleep_seconds)
 
     def nextstate_wait_and_next(self, sleep_seconds: float | None = None):
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
-        self._sleep(sleep_seconds)
+        self.stop_and_push_awake_request(sleep_seconds)
 
     def nextstate_wait_and_repeat(self, sleep_seconds: float | None = None):
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
-        self._sleep(sleep_seconds)
+        self.stop_and_push_awake_request(sleep_seconds)
 
     def nextstate_stay(self, sleep_seconds=None):
-        self._sleep(sleep_seconds)
+        self.stop_and_push_awake_request(sleep_seconds)
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
 
     def nextstate_jump_by_label(self, label: str):
