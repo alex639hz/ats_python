@@ -89,14 +89,9 @@ class Framework:
         future_time = start_at + payload["sleep_seconds"]
 
         if present_time >= future_time:
-            # self.log_msg(
-            #     f"----->>>>>> check_timer: {present_time:.1f} {future_time:.1f}"
-            # )
-            procedure: Procedure = payload["procedure"]
-            procedure.start()
-            return True
+            return False
 
-        return False
+        return True
 
         # self.log_msg(f"$$$$$$$$$$$$$$$$ {present_time}")
         # if not present_time % 10:
@@ -168,9 +163,15 @@ class Framework:
                 )
             return
 
+        def procedure_start(args={}):
+            procedure: Procedure = args["procedure"]
+            procedure.start()
+
+            return
+
         func_dict = {
             DEF_CMD.PROCEDURE_INIT: procedure_init,
-            DEF_CMD.PROCEDURE_PLAY: func,
+            DEF_CMD.PROCEDURE_START: procedure_start,
             DEF_CMD.PROCEDURE_PAUSE: func,
             DEF_CMD.PROCEDURE_APPEND: add_new_procedure,
             DEF_CMD.PROCEDURE_AWAKE: procedure_awake,

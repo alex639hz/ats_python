@@ -162,12 +162,13 @@ class Project(BaseProject):
         second_counter = procedure.context.attribute_get("second_counter") or 0
         second_counter += 1
 
-        if second_counter > 5:
+        RUN_FOREVER = False
+        if second_counter > 5 and not RUN_FOREVER:
             return
 
         procedure.context.attribute_set("second_counter", second_counter)
         framework.log_msg(f"initialize in loop: {second_counter }")
-        procedure.nextstate_wait_and_repeat(3)
+        procedure.nextstate_wait_and_repeat(1)
         pass
 
     def runtime_demo_start_recorder(self, step_interface: StepInterface):

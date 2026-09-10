@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 SHOULD_LOG_STEP = True
 
 
-class Procedure:
+class ProcedureUtility:
 
     def __init__(self, label):
         # private initialized by constructor
@@ -96,7 +96,7 @@ class Procedure:
     def is_running(self):
         return self._is_running
 
-    def start(self):
+    def _start(self):
         self._is_running = True
         return self
 
@@ -104,7 +104,7 @@ class Procedure:
         self._is_running = False
         return self
 
-    def stop_and_push_awake_request(self, sleep_seconds):
+    def stop_and_push_awake_request(self, sleep_seconds=None):
         if sleep_seconds != None:
             start_at = self.framework.get_time_monotonic()
             self.stop()
@@ -195,6 +195,20 @@ class Procedure:
     def _increase_index(self):
         self._index += 1
         return self
+
+
+class Procedure(ProcedureUtility):
+    def __init__(self, label) -> None:
+        super().__init__(label)
+
+    def start(self):
+        self._start()
+
+    # def get_label(self):
+    #     return self.get_label()
+
+    # def framework_set(self, framework):
+    #     return self.framework_set(framework)
 
 
 class Procedures:
