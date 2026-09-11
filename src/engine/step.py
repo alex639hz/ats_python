@@ -3,6 +3,7 @@ from time import time
 from typing import TYPE_CHECKING, Callable
 
 from engine.constants import *
+from engine.types import LogInterface
 from engine.utils import *
 
 if TYPE_CHECKING:
@@ -17,23 +18,37 @@ class Step:
         self.func: Callable[..., str] = step_function
 
     def execute(self, procedure: Procedure):
-        log_msg = self.func(procedure)
-        if log_msg:
-            self.log(procedure, log_msg)
+        log = self.func(procedure)
+        if log is not None:
+            self.log(procedure, log)
 
         return
 
-    def log(self, procedure: Procedure, msg=""):
-        proc_label = procedure.get_label()
+    def build_log(self, procedure, log):
+        pass
+
+    def log(self, procedure, log: str | LogInterface):
+        if log == None:
+            return
+
+        if isinstance(log, str):
+            msg = log
+            args = None
+        elif isinstance(log, dict):
+            msg = log["msg"]
+            args = log["args"]
+        else:
+            raise Exception()
+
         params = {
             "params": {
-                "proc_label": proc_label,
-                "step_label": self.label,
-                "operation": self.op.value,
-                "msg": msg,
+                "proc": procedure.label,
+                "step": self.label,
+                "op": self.op.value,
+                "args": args,
             }
         }
-        procedure.logger.info("STP", extra=params)
+        procedure.logger.info(msg, extra=params)
         return
 
     def get_arg(self, key):
@@ -41,9 +56,6 @@ class Step:
 
     def get_args(self) -> dict:
         return self.args
-
-    def get_label(self):
-        return self.label
 
     def get_op(self):
         return self.op

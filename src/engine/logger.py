@@ -3,7 +3,9 @@ import json
 from datetime import datetime
 from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 from pathlib import Path
+from typing import Any
 from engine.constants import *
+from engine.types import Args, LogInterface
 from engine.utils import Utils
 
 # =========================
@@ -152,3 +154,10 @@ def empty_setup_logging():
 
 def empty_get_logger():
     return EmptySetupLogging()
+
+
+def create_log(msg: str, args: Args) -> LogInterface:
+    return {
+        "msg": msg,
+        "args": args,
+    }

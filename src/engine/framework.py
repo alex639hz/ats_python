@@ -88,17 +88,7 @@ class Framework:
         start_at = payload["start_at"]
         future_time = start_at + payload["sleep_seconds"]
 
-        if present_time >= future_time:
-            return False
-
-        return True
-
-        # self.log_msg(f"$$$$$$$$$$$$$$$$ {present_time}")
-        # if not present_time % 10:
-        #     element = self.q_timer.get(block=False)
-        #     # self._command_processor(element["command"], element["payload"])
-        #     pass
-        # return
+        return present_time >= future_time
 
     def start(self):
         self.engine_thread.start()
@@ -126,7 +116,7 @@ class Framework:
 
         def add_new_procedure(args={}):
             procedure: Procedure = args["procedure"]
-            procedure_label = procedure.get_label()
+            procedure_label = procedure.label
             is_exist = self._procedure_dict.get(procedure_label)
             if is_exist != None:
                 raise Exception(

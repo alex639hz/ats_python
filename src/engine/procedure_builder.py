@@ -19,7 +19,7 @@ class ProcedureBuilder:
         self.label: str = label
         self.steps: list["Step"] = []
 
-    def append_step(self, op: STEP, args, label):
+    def append_step_by_elements(self, op: STEP, args, label):
         step = Step(op, args, label, step_functions[op])
         self.steps.append(step)
         return self
@@ -33,10 +33,14 @@ class ProcedureBuilder:
         return procedure
 
     def add_step_null(self, label):
-        self.append_step(STEP.NULL, NOARG, label)
+        self.append_step_by_elements(STEP.NULL, NOARG, label)
 
     def add_step_exit(self, msg=""):
-        self.append_step(STEP.EXIT, NOARG, msg)
+        self.append_step_by_elements(STEP.EXIT, NOARG, msg)
+
+    def insert_procedure(self, procedure_to_insert: Procedure):
+        for step in procedure_to_insert._steps:
+            self.steps.append(step)
 
     def step_call(self, function: Callable, args=NOARG, label="__name__"):
         step_args = {
@@ -46,7 +50,7 @@ class ProcedureBuilder:
 
         label = function.__name__ if label == "__name__" else label
 
-        self.append_step(
+        self.append_step_by_elements(
             STEP.FUNCTION_CALL,
             step_args,
             label,
@@ -54,8 +58,8 @@ class ProcedureBuilder:
 
     def add_step_delay(self, seconds: float, label=DEF_NO_LABEL):
         args = {STEP_ARG.DURATION_SECONDS: seconds}
-        self.append_step(STEP.DELAY_START, args, label)
-        self.append_step(STEP.DELAY_WAIT, args, DEF_NO_LABEL)
+        self.append_step_by_elements(STEP.DELAY_START, args, label)
+        self.append_step_by_elements(STEP.DELAY_WAIT, args, DEF_NO_LABEL)
 
     def add_step_worker_start(self, thread_name: str, function, args, label=""):
         step_args = {
@@ -63,14 +67,14 @@ class ProcedureBuilder:
             STEP_ARG.ARGS: args,
             STEP_ARG.TITLE: thread_name,
         }
-        self.append_step(STEP.WORKER_START, step_args, label)
+        self.append_step_by_elements(STEP.WORKER_START, step_args, label)
 
     def add_step_worker_wait(self, thread_name, timeout, label=None):
         step_args = {
             STEP_ARG.TITLE: thread_name,
             STEP_ARG.DURATION_SECONDS: timeout,
         }
-        self.append_step(
+        self.append_step_by_elements(
             STEP.WORKER_WAIT,
             step_args,
             label,

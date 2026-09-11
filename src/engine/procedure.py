@@ -18,11 +18,11 @@ if TYPE_CHECKING:
 SHOULD_LOG_STEP = True
 
 
-class ProcedureUtility:
+class Procedure:
 
     def __init__(self, label):
         # private initialized by constructor
-        self._label: str = label
+        self.label: str = label
 
         # private uninitialized by constructor
         self._steps: list["Step"] = []
@@ -61,7 +61,7 @@ class ProcedureUtility:
             res = step.func(self)
             pass
         except Exception as e:
-            msg = f"step exception: {step.get_label() or step.func.__name__ or "No step"} {e}"
+            msg = f"step exception: {step.label or step.func.__name__ or "No step"} {e}"
             self.nextstate_exit(msg)
             return
 
@@ -78,25 +78,20 @@ class ProcedureUtility:
     def get_active_step(self) -> Step:
         return self._steps[self._index]
 
-    def get_label(self) -> str:
-        return self._label
-
     def add_steps(self, new_steps: list[Step]):
         self._steps.extend(new_steps)
         return self
 
     def get_step_by_label(self, label: str):
         for step in self._steps:
-            if step.get_label() == label:
+            if step.label == label:
                 return step
-        raise Exception(
-            f"Step with label {label} not found in procedure {self.get_label()}"
-        )
+        raise Exception(f"Step with label {label} not found in procedure {self.label}")
 
     def is_running(self):
         return self._is_running
 
-    def _start(self):
+    def start(self):
         self._is_running = True
         return self
 
@@ -104,10 +99,9 @@ class ProcedureUtility:
         self._is_running = False
         return self
 
-    def stop_and_push_awake_request(self, sleep_seconds=None):
+    def push_awake_request(self, sleep_seconds=None):
         if sleep_seconds != None:
             start_at = self.framework.get_time_monotonic()
-            self.stop()
 
             cmd = DEF_CMD.PROCEDURE_AWAKE.value
             payload = {
@@ -117,6 +111,16 @@ class ProcedureUtility:
             }
 
             self.framework.pipe_timer.element_push(cmd, payload)
+
+    def push_start_request(self):
+        start_at = self.framework.get_time_monotonic()
+
+        cmd = DEF_CMD.PROCEDURE_START
+        args = {
+            "procedure": self,
+        }
+
+        self.framework.pipe_eng.element_push(cmd, args)
 
     def call_init(self):
         self.framework.pipe_eng.element_push(
@@ -153,7 +157,7 @@ class ProcedureUtility:
         return self
 
     def nextstate_init(self, sleep_seconds=None):
-        self.stop_and_push_awake_request(sleep_seconds)
+        self.push_awake_request(sleep_seconds)
         self._nextstate = (DEF_NEXTSTATE_OP.INIT, None)
         return self._nextstate
 
@@ -162,27 +166,28 @@ class ProcedureUtility:
 
     def nextstate_next(self, sleep_seconds: float | None = None):
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
-        self.stop_and_push_awake_request(sleep_seconds)
+        self.push_awake_request(sleep_seconds)
 
     def nextstate_wait_and_next(self, sleep_seconds: float | None = None):
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
-        self.stop_and_push_awake_request(sleep_seconds)
+        self.push_awake_request(sleep_seconds)
 
-    def nextstate_wait_and_repeat(self, sleep_seconds: float | None = None):
+    def nextstate_wait_and_repeat(self, sleep_seconds: float):
+        self.stop()
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
-        self.stop_and_push_awake_request(sleep_seconds)
+        self.push_awake_request(sleep_seconds)
 
     def nextstate_stay(self, sleep_seconds=None):
-        self.stop_and_push_awake_request(sleep_seconds)
+        self.push_awake_request(sleep_seconds)
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
 
     def nextstate_jump_by_label(self, label: str):
         for index, step in enumerate(self._steps):
-            if step.get_label() == label:
+            if step.label == label:
                 self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, index)
                 return DEF_OK
         raise Exception(
-            f"step with label '{label}' not found in procedure '{self.get_label()}'"
+            f"step with label '{label}' not found in procedure '{self.label}'"
         )
         # self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, idx)
 
@@ -197,20 +202,6 @@ class ProcedureUtility:
         return self
 
 
-class Procedure(ProcedureUtility):
-    def __init__(self, label) -> None:
-        super().__init__(label)
-
-    def start(self):
-        self._start()
-
-    # def get_label(self):
-    #     return self.get_label()
-
-    # def framework_set(self, framework):
-    #     return self.framework_set(framework)
-
-
 class Procedures:
     def __init__(self) -> None:
         self.procedures: list["Procedure"] = []
@@ -220,6 +211,6 @@ class Procedures:
 
     def get_procedure_by_label(self, label: str) -> Procedure | None:
         for procedure in self.procedures:
-            if procedure.get_label() == label:
+            if procedure.label == label:
                 return procedure
         return None

@@ -5,12 +5,14 @@ import time
 
 # from engine import utils
 from engine.framework import framework
+from engine.logger import create_log
 from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
 from engine.constants import *
 
 # from instruments.instrument import Instrument
 from engine.utils import Utils
+from project.base_project import BaseProject
 from project.instruments.instrument_repo import repository
 from project.instruments.types.instrument_power_supply import PowerSupply
 from project.instruments.types.instrument_dmm import Dmm
@@ -24,118 +26,45 @@ LABEL_PREPARE_TEST = "prepare_test"
 logger = logging.getLogger("[user]")
 
 
-class BaseProject:
-    def __init__(self) -> None:
-        self.framework = framework
-        self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
-        self.case_index = 0
-        self.dut = DutA()
-
-        self.procedure_env_setup = ProcedureBuilder("env_setup")
-
-    pass
-
-    def base_export(self, runtime_dut_init, runtime_test):
-
-        self.procedure_env_setup.step_call(self.runtime_verify_hw)
-        self.procedure_env_setup.step_call(self.create_session)
-        self.procedure_env_setup.step_call(runtime_dut_init)
-        self.procedure_env_setup.step_call(self.runtime_set_thermal)
-        self.procedure_env_setup.step_call(runtime_test)
-
-        env_setup = self.procedure_env_setup.generate_procedure()
-        env_setup.start()
-        framework.procedure_append(env_setup)
-
-    def runtime_session_init(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        value = procedure.get_active_step().get_op().value
-        print(f"hello: {value}")
-        procedure.nextstate_next(1)
-        pass
-
-    def create_session(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-
-        session = {
-            "created_at": self.framework.get_time_datetime(),
-            "label": procedure.get_label(),
-            "cases": self.cases,
-        }
-        res = procedure.db.create_session(session)
-        session["_id"] = res.inserted_id
-        procedure.context.attribute_set("session", session)
-
-    def runtime_set_thermal(self, step_interface: StepInterface):
-        pass
-
-    def runtime_verify_hw(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-
-        def create_case():
-            session = procedure.context.attribute_get("session")
-            session_id = session["_id"]
-            selected_case = session["cases"][0]
-            created_at = self.framework.get_time_datetime()
-
-            case = {
-                "created_at": created_at,
-                "session_id": session_id,
-                "case": selected_case,
-            }
-            res = procedure.db.insert_one(COLLECTION_CASE, case)
-            case_id = res.inserted_id
-            procedure.context.attribute_set("case_id", case_id)
-            procedure.context.attribute_set("case", case)
-
-        def setup_env():
-
-            def initialize_instruments(_path):
-                path: Path = Path(_path)
-                with path.open(encoding="utf-8") as f:
-                    json_payload = json.load(f)
-
-                # TODO does instrument_by_label required? check repository instead
-                for instrument in json_payload:
-                    repository.instrument_factory(instrument)
-
-            initialize_instruments(f"C:/ats_python/src/project/instruments.json")
-            dmm: Dmm = repository.get_instrument_by_label("dmm")
-            ps: PowerSupply = repository.get_instrument_by_label("ps")
-
-            dmm.setup()
-            ps.setup()
-
-        def setup_dut():
-            self.dut.register_write(self.dut.REG1, self.dut.REG1_SETUP_C)
-            self.dut.bit_write(self.dut.BIT0, self.dut.BIT_ON)
-
-        # create_case()
-
-        # setup_env()
-
-        # setup_dut()
-
-        return DEF_OK
-
-
 class Project(BaseProject):
 
     def __init__(self) -> None:
         super().__init__()
 
+        dut_procedure = self.demo_build_automation_example()
+        SHOULD_USE_BASE_PROJECT = True
+        if SHOULD_USE_BASE_PROJECT:
+            final_procedure = self.base_export(dut_procedure)
+        else:
+            final_procedure = dut_procedure
+
+        final_procedure.start()
+        framework.procedure_append(final_procedure)
+
+    def demo_build_automation_example(self):
+        builder = ProcedureBuilder("dut_test")
+
+        builder.step_call(self.runtime_demo_init_once)
+        builder.step_call(self.runtime_demo_init_in_loop)
+
+        dut_test_procedure = builder.generate_procedure()
+        return dut_test_procedure
+
+    def demo_build_automation_example_2(self):
         builder = ProcedureBuilder("dut_test")
 
         builder.step_call(self.runtime_demo_init_once)
         builder.step_call(self.runtime_demo_start_recorder)
         builder.step_call(self.runtime_demo_init_in_loop)
-        builder.step_call(self.runtime_demo_step_v4)
+        builder.step_call(self.runtime_demo_close_recorder)
 
         dut_test_procedure = builder.generate_procedure()
 
         SHOULD_USE_BASE_PROJECT = False
         if SHOULD_USE_BASE_PROJECT:
-            self.base_export(self.dut_init, self.dut_test)
+            # TODO fix below line
+            # self.base_export(self.dut_init, self.dut_test)
+            pass
         else:
             framework.procedure_append(dut_test_procedure)
             dut_test_procedure.start()
@@ -149,52 +78,51 @@ class Project(BaseProject):
     def runtime_demo_init_once(self, step_interface: StepInterface):
         # return
         procedure, args = Utils.extract_step_interface(step_interface)
-        step_label = procedure.get_active_step().get_label()
-        framework.log_msg(f"initialize all that can be set in one call: {step_label}")
+        step_label = procedure.get_active_step().label
         procedure.nextstate_next()
-        pass
+        return f"runtime_demo_init_once OK: {step_label}"
 
     def runtime_demo_init_in_loop(self, step_interface: StepInterface):
         # return
         procedure, args = Utils.extract_step_interface(step_interface)
-        step_label = procedure.get_active_step().get_label()
+        step_label = procedure.get_active_step().label
         # procedure.nextstate_wait_and_repeat(5)
         second_counter = procedure.context.attribute_get("second_counter") or 0
         second_counter += 1
+        procedure.context.attribute_set("second_counter", second_counter)
 
         RUN_FOREVER = False
         if second_counter > 5 and not RUN_FOREVER:
             return
 
-        procedure.context.attribute_set("second_counter", second_counter)
-        framework.log_msg(f"initialize in loop: {second_counter }")
         procedure.nextstate_wait_and_repeat(1)
-        pass
+        return create_log(f"initialize in loop: {second_counter }", {"hello": "world"})
 
     def runtime_demo_start_recorder(self, step_interface: StepInterface):
         # return
 
         def thermal_read(step_interface: StepInterface):
             procedure, args = Utils.extract_step_interface(step_interface)
-            step_label = procedure.get_active_step().get_label()
-            framework.log_msg(f"initialize all 8888888: {step_label}")
-            procedure.nextstate_wait_and_repeat(1)
+            step_label = procedure.get_active_step().label
+            framework.log_msg(f"proc:{procedure.label} step: {step_label}")
+            procedure.nextstate_wait_and_repeat(2)
 
+        procedure, args = Utils.extract_step_interface(step_interface)
         builder = ProcedureBuilder("thermal_recorder")
         builder.step_call(thermal_read)
         recorder_procedure = builder.generate_procedure()
         framework.procedure_append(recorder_procedure)
         recorder_procedure.start()
         framework.context.attribute_set("recorder_procedure", recorder_procedure)
+        framework.log_msg(f"proc:{procedure.label} runtime_demo_start_recorder")
+
         pass
 
-    def runtime_demo_step_v4(self, step_interface: StepInterface):
+    def runtime_demo_close_recorder(self, step_interface: StepInterface):
         # return
         # procedure, args = Utils.extract_step_interface(step_interface)
-        # step_label = procedure.get_active_step().get_label()
-        framework.log_msg(f"^^^^^^^ hello v4 step_label: {""}")
-        # procedure.nextstate_wait_and_repeat(5)
-        # procedure.nextstate_wait_and_next(5)
+        # step_label = procedure.get_active_step().label
+        framework.log_msg(f"runtime_demo_close_recorder: {""}")
         recorder_procedure: Procedure = framework.context.attribute_get(
             "recorder_procedure"
         )
