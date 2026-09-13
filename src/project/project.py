@@ -27,21 +27,21 @@ class Project(BaseProject):
     def __init__(self) -> None:
         super().__init__()
 
-        dut_procedure = self.demo_build_automation_example()
+        dut_test = self.build_test_procedure()
         USE_BASE_PROJECT = True
         if USE_BASE_PROJECT:
-            final_procedure = self.base_export(dut_procedure)
+            final_procedure = self.base_export(dut_test)
         else:
-            final_procedure = dut_procedure
+            final_procedure = dut_test
 
         final_procedure.start()
         framework.procedure_append(final_procedure)
 
-    def demo_build_automation_example(self):
+    def build_test_procedure(self):
         builder = ProcedureBuilder("dut_test")
         builder.step_call(self.runtime_demo_dut_test)
-        dut_test_procedure = builder.generate_procedure()
-        return dut_test_procedure
+        dut_test = builder.generate_procedure()
+        return dut_test
 
     def demo_build_automation_example_2(self):
         builder = ProcedureBuilder("dut_test")
@@ -73,7 +73,11 @@ class Project(BaseProject):
 
     def runtime_demo_dut_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        return f"runtime_demo_dut_test OK"
+        SUCCESS = True
+        if SUCCESS:
+            return DEF_OK
+        else:
+            raise Exception("Error Occurred in dut test")
 
     def runtime_demo_start_recorder(self, step_interface: StepInterface):
         # return

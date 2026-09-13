@@ -57,7 +57,7 @@ class Procedure:
     def execution_processor(self, framework: Framework):
         try:
             step = self.get_active_step()
-            self.nextstate_next()  # Default
+            self.nextstate_next()
             res = step.func(self)
             pass
         except Exception as e:

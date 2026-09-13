@@ -42,6 +42,10 @@ class Db:
         res = self._collection(COLLECTION_SESSION).insert_one(session)
         return res
 
+    def update_session(self, session_id, update_doc):
+        res = self.update_one(COLLECTION_SESSION, {"_id": session_id}, update_doc)
+        return res
+
     def find_by_id(self, collection, _id):
         res = self.find_one(collection, {"_id": _id})  # [collection].find_one(query)
         return res

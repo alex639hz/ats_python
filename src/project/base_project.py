@@ -43,11 +43,14 @@ class BaseProject:
         # repeat for every test case
         self.procedure_env_setup = ProcedureBuilder("dut_env_test")
         self.procedure_env_setup.step_call(self.runtime_load_test_cases)
-        self.procedure_env_setup.step_call(self.runtime_load_test_next)
+        self.procedure_env_setup.step_call(
+            self.runtime_load_next_test, label="load_next_test"
+        )
         self.procedure_env_setup.step_call(self.runtime_verify_hw)
         self.procedure_env_setup.step_call(self.runtime_create_session)
         self.procedure_env_setup.insert_procedure(dut_test)
-        self.procedure_env_setup.step_call(self.runtime_set_thermal)
+        self.procedure_env_setup.step_call(self.runtime_update_session)
+        self.procedure_env_setup.step_call(self.runtime_loop_next)
 
         env_setup = self.procedure_env_setup.generate_procedure()
         return env_setup
@@ -80,7 +83,7 @@ class BaseProject:
         self.test_index = 0
         return DEF_OK
 
-    def runtime_load_test_next(self, step_interface: StepInterface):
+    def runtime_load_next_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
 
         test_count = len(self.test_cases)
@@ -88,10 +91,10 @@ class BaseProject:
 
         if not is_index_in_range:
             procedure.stop()
-            return
+            return "COMPLETED"
 
         self.test_case = self.test_cases[self.test_index]
-        return f"Setting next test case: {self.test_index}"
+        return f"test case: {self.test_index}"
 
     def runtime_session_init(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
@@ -111,10 +114,31 @@ class BaseProject:
         res = procedure.db.create_session(session)
         session["_id"] = res.inserted_id
         procedure.context.attribute_set("session", session)
-        return f"create_session OK {session["_id"]}"
+        return f"OK create_session {session["_id"]}"
 
-    def runtime_set_thermal(self, step_interface: StepInterface):
-        pass
+    def runtime_update_session(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+
+        session = procedure.context.attribute_get("session")
+        update_doc = {
+            "result": {"status": "OK"},
+        }
+
+        res = procedure.db.update_session(session["_id"], update_doc)
+        return f"OK update_session {session["_id"]}"
+
+    def runtime_loop_next(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        self.test_index = self.test_index + 1
+        test_count = len(self.test_cases)
+        is_completed = self.test_index >= test_count
+
+        if is_completed:
+            procedure.stop()
+            return "COMPLETED"
+
+        procedure.nextstate_jump_by_label("load_next_test")
+        return "going next test"
 
     def runtime_verify_hw(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)

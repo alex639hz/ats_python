@@ -43,12 +43,13 @@ class Step:
         params = {
             "params": {
                 "proc": procedure.label,
-                "step": self.label,
                 "op": self.op.value,
+                "step": self.label,
                 "args": args,
+                "msg": msg,
             }
         }
-        procedure.logger.info(msg, extra=params)
+        procedure.logger.info("-", extra=params)
         return
 
     def get_arg(self, key):

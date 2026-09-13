@@ -64,6 +64,7 @@ class NDJsonFormatter(logging.Formatter):
 
         log_record = {
             "time": datetime.utcfromtimestamp(record.created).isoformat(),
+            "level": record.levelname,
             "msg": record.getMessage(),
         }
 
