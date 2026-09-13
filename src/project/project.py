@@ -70,8 +70,16 @@ class Project(BaseProject):
 
     def runtime_demo_dut_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        SUCCESS = True
-        if SUCCESS:
+        is_first_run = procedure.is_first_run()
+        if is_first_run:
+            thermal = self.get_thermal(25, "starter")
+            procedure.context.attribute_set("thermal", thermal)
+        else:
+            thermal = procedure.context.attribute_get("thermal")
+
+        is_running = thermal.is_running()
+        if is_running:
+            procedure.nextstate_wait_and_repeat(2)
             return DEF_OK
         else:
             raise Exception("Error Occurred in dut test")

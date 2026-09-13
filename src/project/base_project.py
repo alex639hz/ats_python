@@ -188,20 +188,20 @@ class BaseProject:
 
         return DEF_OK
 
-    def get_thermal(self) -> Procedure:
+    def get_thermal(self, degrees, label: str) -> Procedure:
 
         def thermal_read(step_interface: StepInterface):
             procedure, args = Utils.extract_step_interface(step_interface)
             procedure.nextstate_wait_and_repeat(2)
-            return DEF_OK
+            return f"degrees: {degrees}"
 
-        builder = ProcedureBuilder("thermal")
+        builder = ProcedureBuilder(f"thermal_{label}")
         builder.step_call(thermal_read)
         recorder_procedure = builder.generate_procedure()
-        SHOULD_START = False
+        SHOULD_START = True
         if SHOULD_START:
             recorder_procedure.start()
-        SHOULD_APPEND = False
+        SHOULD_APPEND = True
         if SHOULD_APPEND:
             framework.procedure_append(recorder_procedure)
 

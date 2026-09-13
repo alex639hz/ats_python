@@ -92,6 +92,14 @@ class Procedure:
     def is_running(self):
         return self._is_running
 
+    def is_first_run(self):
+
+        if self._is_first_run:
+            self._is_first_run = False
+            return True
+
+        return False
+
     def start(self):
         self._is_running = True
         return self
