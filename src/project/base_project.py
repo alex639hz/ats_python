@@ -42,12 +42,9 @@ class BaseProject:
         # save test results in db
         # repeat for every test case
         self.procedure_env_setup = ProcedureBuilder("dut_env_test")
-        self.procedure_env_setup.step_call(self.runtime_load_test_cases)
-        self.procedure_env_setup.step_call(
-            self.runtime_load_next_test, label="load_next_test"
-        )
-        self.procedure_env_setup.step_call(self.runtime_verify_hw)
         self.procedure_env_setup.step_call(self.runtime_create_session)
+        self.procedure_env_setup.step_call(self.runtime_load_test, label="load_test")
+        self.procedure_env_setup.step_call(self.runtime_verify_hw)
         self.procedure_env_setup.insert_procedure(dut_test)
         self.procedure_env_setup.step_call(self.runtime_update_session)
         self.procedure_env_setup.step_call(self.runtime_loop_next)
@@ -78,23 +75,21 @@ class BaseProject:
         procedure.nextstate_wait_and_repeat(1)
         return create_log(f"initialize in loop: {second_counter }", {"hello": "world"})
 
-    def runtime_load_test_cases(self, step_interface: StepInterface):
-        self.test_cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
-        self.test_index = 0
-        return DEF_OK
-
-    def runtime_load_next_test(self, step_interface: StepInterface):
+    def runtime_load_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
+        session = procedure.context.attribute_get("session")
+        index = session["index"]
+        test_cases = session["cases"]
+        case_count = len(test_cases)
+        is_index_ok = index < case_count
 
-        test_count = len(self.test_cases)
-        is_index_in_range = self.test_index < test_count
-
-        if not is_index_in_range:
+        if not is_index_ok:
             procedure.stop()
             return "COMPLETED"
 
-        self.test_case = self.test_cases[self.test_index]
-        return f"test case: {self.test_index}"
+        session["test"] = test_cases[index]
+        procedure.context.attribute_set("session", session)
+        return f"test case: {session["test"]["label"] }"
 
     def runtime_session_init(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
@@ -105,39 +100,43 @@ class BaseProject:
 
     def runtime_create_session(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-
+        test_cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
         session = {
             "created_at": framework.get_time_datetime(),
             "label": procedure.label,
-            "cases": self.test_cases,
+            "cases": test_cases,
+            "index": 0,
+            "results": [],
         }
         res = procedure.db.create_session(session)
         session["_id"] = res.inserted_id
         procedure.context.attribute_set("session", session)
-        return f"OK create_session {session["_id"]}"
+        return f"session_id: {session["_id"]}"
 
     def runtime_update_session(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-
         session = procedure.context.attribute_get("session")
-        update_doc = {
-            "result": {"status": "OK"},
-        }
+        test = session["test"]
 
-        res = procedure.db.update_session(session["_id"], update_doc)
+        res = procedure.db.update_session_result(session["_id"], test["result"])
         return f"OK update_session {session["_id"]}"
 
     def runtime_loop_next(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        self.test_index = self.test_index + 1
-        test_count = len(self.test_cases)
-        is_completed = self.test_index >= test_count
+        session = procedure.context.attribute_get("session")
+        next_index = session["index"] + 1
 
-        if is_completed:
+        test_cases = session["cases"]
+        case_count = len(test_cases)
+        is_index_ok = next_index < case_count
+
+        if not is_index_ok:
             procedure.stop()
             return "COMPLETED"
 
-        procedure.nextstate_jump_by_label("load_next_test")
+        session["index"] = next_index
+        procedure.context.attribute_set("session", session)
+        procedure.nextstate_jump_by_label("load_test")
         return "going next test"
 
     def runtime_verify_hw(self, step_interface: StepInterface):
@@ -188,6 +187,25 @@ class BaseProject:
         # setup_dut()
 
         return DEF_OK
+
+    def get_thermal(self) -> Procedure:
+
+        def thermal_read(step_interface: StepInterface):
+            procedure, args = Utils.extract_step_interface(step_interface)
+            procedure.nextstate_wait_and_repeat(2)
+            return DEF_OK
+
+        builder = ProcedureBuilder("thermal")
+        builder.step_call(thermal_read)
+        recorder_procedure = builder.generate_procedure()
+        SHOULD_START = False
+        if SHOULD_START:
+            recorder_procedure.start()
+        SHOULD_APPEND = False
+        if SHOULD_APPEND:
+            framework.procedure_append(recorder_procedure)
+
+        return recorder_procedure
 
 
 def create_procedure_with_preset() -> Procedure:

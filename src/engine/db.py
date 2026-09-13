@@ -34,6 +34,11 @@ class Db:
             query, {"$set": update_doc}, upsert=upsert
         )
 
+    def push_one(self, collection, query, push_doc, upsert=False):
+        res = self._collection(collection).update_one(
+            query, {"$push": push_doc}, upsert=upsert
+        )
+
     def insert_one(self, collection, update_doc):
         res = self._collection(collection).insert_one(update_doc)
         return res
@@ -44,6 +49,14 @@ class Db:
 
     def update_session(self, session_id, update_doc):
         res = self.update_one(COLLECTION_SESSION, {"_id": session_id}, update_doc)
+        return res
+
+    def update_session_result(self, session_id, state: bool):
+        """push state into results array."""
+
+        res = self.push_one(
+            COLLECTION_SESSION, {"_id": session_id}, {"results": state}
+        )
         return res
 
     def find_by_id(self, collection, _id):

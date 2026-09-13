@@ -45,10 +45,13 @@ class Step:
                 "proc": procedure.label,
                 "op": self.op.value,
                 "step": self.label,
-                "args": args,
                 "msg": msg,
             }
         }
+
+        if args:
+            params["params"]["args"] = args
+
         procedure.logger.info("-", extra=params)
         return
 

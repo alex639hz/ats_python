@@ -68,9 +68,6 @@ class Project(BaseProject):
         dut.register_write(dut.REG1, 10)
         pass
 
-    def dut_test(self):
-        pass
-
     def runtime_demo_dut_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         SUCCESS = True
