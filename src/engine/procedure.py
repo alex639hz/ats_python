@@ -62,6 +62,7 @@ class Procedure:
             pass
         except Exception as e:
             msg = f"step exception: {step.label or step.func.__name__ or "No step"} {e}"
+            framework.log_err(msg)
             self.nextstate_exit(msg)
             return
 
@@ -190,9 +191,6 @@ class Procedure:
             f"step with label '{label}' not found in procedure '{self.label}'"
         )
         # self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, idx)
-
-    def nextstate_stop(self):
-        self._is_running = False
 
     def nextstate_exit(self, msg=""):
         self.framework.call_shutdown(msg)

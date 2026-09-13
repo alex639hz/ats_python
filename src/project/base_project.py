@@ -27,15 +27,13 @@ logger = logging.getLogger("[user]")
 
 class BaseProject:
     def __init__(self) -> None:
-        self.framework = framework
-        self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
-        self.case_index = 0
+        # self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
+        # self.case_index = 0
         self.dut = DutA()
 
     pass
 
     def base_export(self, dut_test: Procedure):
-        self.procedure_env_setup = ProcedureBuilder("env_setup")
         # read validation config and set context(lab env, test cases)
         # create db session
         # set lab env (scope,dmm, thermal)
@@ -43,6 +41,9 @@ class BaseProject:
         # execute test
         # save test results in db
         # repeat for every test case
+        self.procedure_env_setup = ProcedureBuilder("dut_env_test")
+        self.procedure_env_setup.step_call(self.runtime_load_test_cases)
+        self.procedure_env_setup.step_call(self.runtime_load_test_next)
         self.procedure_env_setup.step_call(self.runtime_verify_hw)
         self.procedure_env_setup.step_call(self.runtime_create_session)
         self.procedure_env_setup.insert_procedure(dut_test)
@@ -50,8 +51,47 @@ class BaseProject:
 
         env_setup = self.procedure_env_setup.generate_procedure()
         return env_setup
-        # env_setup.start()
-        # framework.procedure_append(env_setup)
+
+    def runtime_demo_init_once(self, step_interface: StepInterface):
+        # return
+        procedure, args = Utils.extract_step_interface(step_interface)
+        step_label = procedure.get_active_step().label
+        procedure.nextstate_next()
+        return f"runtime_demo_init_once OK: {step_label}"
+
+    def runtime_demo_init_in_loop(self, step_interface: StepInterface):
+        # return
+        procedure, args = Utils.extract_step_interface(step_interface)
+        step_label = procedure.get_active_step().label
+        # procedure.nextstate_wait_and_repeat(5)
+        second_counter = procedure.context.attribute_get("second_counter") or 0
+        second_counter += 1
+        procedure.context.attribute_set("second_counter", second_counter)
+
+        RUN_FOREVER = False
+        if second_counter > 3 and not RUN_FOREVER:
+            return
+
+        procedure.nextstate_wait_and_repeat(1)
+        return create_log(f"initialize in loop: {second_counter }", {"hello": "world"})
+
+    def runtime_load_test_cases(self, step_interface: StepInterface):
+        self.test_cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
+        self.test_index = 0
+        return DEF_OK
+
+    def runtime_load_test_next(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+
+        test_count = len(self.test_cases)
+        is_index_in_range = self.test_index < test_count
+
+        if not is_index_in_range:
+            procedure.stop()
+            return
+
+        self.test_case = self.test_cases[self.test_index]
+        return f"Setting next test case: {self.test_index}"
 
     def runtime_session_init(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
@@ -64,9 +104,9 @@ class BaseProject:
         procedure, args = Utils.extract_step_interface(step_interface)
 
         session = {
-            "created_at": self.framework.get_time_datetime(),
+            "created_at": framework.get_time_datetime(),
             "label": procedure.label,
-            "cases": self.cases,
+            "cases": self.test_cases,
         }
         res = procedure.db.create_session(session)
         session["_id"] = res.inserted_id
@@ -83,7 +123,7 @@ class BaseProject:
             session = procedure.context.attribute_get("session")
             session_id = session["_id"]
             selected_case = session["cases"][0]
-            created_at = self.framework.get_time_datetime()
+            created_at = framework.get_time_datetime()
 
             case = {
                 "created_at": created_at,

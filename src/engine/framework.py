@@ -188,6 +188,9 @@ class Framework:
     def log_msg(self, msg, params={}):
         self.logger.info(msg, extra=params)
 
+    def log_err(self, msg, params={}):
+        self.logger.error(msg, extra=params)
+
     def log_command(self, command, args):
         command = DEF_CMD(command).value
         # res = args["result"]

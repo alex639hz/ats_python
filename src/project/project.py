@@ -13,10 +13,6 @@ from engine.constants import *
 # from instruments.instrument import Instrument
 from engine.utils import Utils
 from project.base_project import BaseProject
-from project.instruments.instrument_repo import repository
-from project.instruments.types.instrument_power_supply import PowerSupply
-from project.instruments.types.instrument_dmm import Dmm
-from project.instruments.types.instrument_scope import Scope
 from project.presets.power_integrity import TestBuilderPowerSupply
 from project.dut.dut_a import DutA
 from project.template import *
@@ -32,8 +28,8 @@ class Project(BaseProject):
         super().__init__()
 
         dut_procedure = self.demo_build_automation_example()
-        SHOULD_USE_BASE_PROJECT = True
-        if SHOULD_USE_BASE_PROJECT:
+        USE_BASE_PROJECT = True
+        if USE_BASE_PROJECT:
             final_procedure = self.base_export(dut_procedure)
         else:
             final_procedure = dut_procedure
@@ -43,10 +39,7 @@ class Project(BaseProject):
 
     def demo_build_automation_example(self):
         builder = ProcedureBuilder("dut_test")
-
-        builder.step_call(self.runtime_demo_init_once)
-        builder.step_call(self.runtime_demo_init_in_loop)
-
+        builder.step_call(self.runtime_demo_dut_test)
         dut_test_procedure = builder.generate_procedure()
         return dut_test_procedure
 
@@ -70,33 +63,17 @@ class Project(BaseProject):
             dut_test_procedure.start()
 
     def dut_init(self):
+        dut = DutA()
+        dut.open()
+        dut.register_write(dut.REG1, 10)
         pass
 
     def dut_test(self):
         pass
 
-    def runtime_demo_init_once(self, step_interface: StepInterface):
-        # return
+    def runtime_demo_dut_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        step_label = procedure.get_active_step().label
-        procedure.nextstate_next()
-        return f"runtime_demo_init_once OK: {step_label}"
-
-    def runtime_demo_init_in_loop(self, step_interface: StepInterface):
-        # return
-        procedure, args = Utils.extract_step_interface(step_interface)
-        step_label = procedure.get_active_step().label
-        # procedure.nextstate_wait_and_repeat(5)
-        second_counter = procedure.context.attribute_get("second_counter") or 0
-        second_counter += 1
-        procedure.context.attribute_set("second_counter", second_counter)
-
-        RUN_FOREVER = False
-        if second_counter > 5 and not RUN_FOREVER:
-            return
-
-        procedure.nextstate_wait_and_repeat(1)
-        return create_log(f"initialize in loop: {second_counter }", {"hello": "world"})
+        return f"runtime_demo_dut_test OK"
 
     def runtime_demo_start_recorder(self, step_interface: StepInterface):
         # return
@@ -138,7 +115,7 @@ class Project(BaseProject):
         if case_type == "testA":
             template_a = TemplateA("test_A")
             case_procedure = template_a.get_procedure()
-            self.framework.procedure_append(case_procedure)
+            framework.procedure_append(case_procedure)
             self.test_proc = case_procedure
         else:
             raise Exception("case type error")
