@@ -9,14 +9,14 @@ import json
 import time
 from typing import Any
 
+from engine.procedure import Procedure
 from engine.context import Context
 from engine.logger import setup_logging
 from engine.pipeline import Pipeline
-from engine.utils import Utils
 from engine.constants import *
-from engine.procedure import Procedure
 from engine.db import database
 from engine.server.server_main import Server
+from engine.utils import Utils
 
 # from engine.server.server_main import run_server
 
@@ -128,6 +128,17 @@ class Framework:
             self._procedure_dict[procedure_label] = index
             return DEF_OK
 
+        def delete_procedure(args={}):
+            procedure: Procedure = args["procedure"]
+            procedure_label = procedure.label
+            is_exist = self._procedure_dict.get(procedure_label)
+            if is_exist == None:
+                raise Exception(f"ERR delete_procedure: {procedure_label}")
+            index = self._procedure_dict[procedure_label]
+            del self._procedure_list[index]
+            del self._procedure_dict[procedure_label]
+            return DEF_OK
+
         def exit(args={}):
             self.log_listener.stop()
             self.log_listener
@@ -164,6 +175,7 @@ class Framework:
             DEF_CMD.PROCEDURE_START: procedure_start,
             DEF_CMD.PROCEDURE_PAUSE: func,
             DEF_CMD.PROCEDURE_APPEND: add_new_procedure,
+            DEF_CMD.PROCEDURE_DELETE: delete_procedure,
             DEF_CMD.PROCEDURE_AWAKE: procedure_awake,
             DEF_CMD.EXIT: exit,
         }
@@ -188,9 +200,6 @@ class Framework:
     def log_msg(self, msg, params={}):
         self.logger.info(msg, extra=params)
 
-    def log_err(self, msg, params={}):
-        self.logger.error(msg, extra=params)
-
     def log_command(self, command, args):
         command = DEF_CMD(command).value
         # res = args["result"]
@@ -204,6 +213,9 @@ class Framework:
 
     def procedure_append(self, procedure: Procedure):
         self.pipe_eng.element_push(DEF_CMD.PROCEDURE_APPEND, {"procedure": procedure})
+
+    def procedure_delete(self, procedure: Procedure):
+        self.pipe_eng.element_push(DEF_CMD.PROCEDURE_DELETE, {"procedure": procedure})
 
     def procedure_get_by_label(self, label) -> Procedure:
         index = self._procedure_dict[label]

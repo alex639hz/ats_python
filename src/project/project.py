@@ -39,6 +39,10 @@ class Project(BaseProject):
 
     def build_test_procedure(self):
         builder = ProcedureBuilder("dut_test")
+        builder.step_call(
+            self.runtime_dut_set_register,
+            {"address": DutA.REG1, "value": DutA.REG1_SETUP_A},
+        )
         builder.step_call(self.runtime_demo_dut_test)
         dut_test = builder.generate_procedure()
         return dut_test
@@ -74,15 +78,22 @@ class Project(BaseProject):
         if is_first_run:
             thermal = self.get_thermal(25, "starter")
             procedure.context.attribute_set("thermal", thermal)
-        else:
-            thermal = procedure.context.attribute_get("thermal")
 
-        is_running = thermal.is_running()
-        if is_running:
-            procedure.nextstate_wait_and_repeat(2)
-            return DEF_OK
-        else:
-            raise Exception("Error Occurred in dut test")
+        thermal: Procedure = procedure.context.attribute_get("thermal")
+
+        status = thermal.context.attribute_get("status")
+        # if status == "in_process":
+        if status == "completed":
+            # procedure.nextstate_wait_and_repeat(1)
+            # thermal = procedure.context.attribute_delete("thermal")
+
+            procedure.reset_is_first_run()
+            return f"www ---completed---- {status}"
+
+        procedure.nextstate_wait_and_repeat(1)
+        return f"www {status}"
+        # else:
+        # raise Exception("Error Occurred in dut test")
 
     def runtime_demo_start_recorder(self, step_interface: StepInterface):
         # return
@@ -114,6 +125,14 @@ class Project(BaseProject):
         )
         recorder_procedure.stop()
         pass
+
+    def runtime_dut_set_register(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        address = args["address"]
+        value = args["value"]
+        dut: DutA = procedure.context.attribute_get("dut")
+        dut.register_write(address, value)
+        return f"write register address:{address} value{value}"
 
     def runtime_call_template(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)

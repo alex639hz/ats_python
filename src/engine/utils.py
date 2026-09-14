@@ -6,34 +6,37 @@ import logging
 from typing import TYPE_CHECKING, Final
 from pathlib import Path
 from engine.constants import *
-from engine.types import StepInterface
+
+# from engine.procedure import Procedure
 
 if TYPE_CHECKING:
-    from project.types import *
+    from engine.types import LogInterface, StepInterface
+
+    # from project.types import *
 
 logger = logging.getLogger("utils")
 
 
-class Register:
-    def __init__(self, address: RegisterAddress, value: int = 0):
-        self.address: RegisterAddress = address
-        self.value = value
+# class Register:
+#     def __init__(self, address: RegisterAddress, value: int = 0):
+#         self.address: RegisterAddress = address
+#         self.value = value
 
-    def write_register(self, value):
-        self.value = value
+#     def write_register(self, value):
+#         self.value = value
 
-    def read_register(self):
-        return self.value
+#     def read_register(self):
+#         return self.value
 
-    def write_bit(self, bit_idx: BitIndex, bit_value: BitValue):
-        if bit_value:
-            self.value |= 1 << bit_idx
-        else:
-            self.value &= ~(1 << bit_idx)
-        return self.value
+#     def write_bit(self, bit_idx: BitIndex, bit_value: BitValue):
+#         if bit_value:
+#             self.value |= 1 << bit_idx
+#         else:
+#             self.value &= ~(1 << bit_idx)
+#         return self.value
 
-    def read_bit(self, bit_idx: BitIndex):
-        return (self.value >> bit_idx) & 1
+#     def read_bit(self, bit_idx: BitIndex):
+#         return (self.value >> bit_idx) & 1
 
 
 class Utils:

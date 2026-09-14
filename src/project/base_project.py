@@ -192,11 +192,25 @@ class BaseProject:
 
         def thermal_read(step_interface: StepInterface):
             procedure, args = Utils.extract_step_interface(step_interface)
-            procedure.nextstate_wait_and_repeat(2)
+
+            thermal_counter = procedure.context.attribute_get("thermal_counter") or 0
+            thermal_counter += 1
+            procedure.context.attribute_set("thermal_counter", thermal_counter)
+
+            RUN_FOREVER = False
+            if thermal_counter > 3 and not RUN_FOREVER:
+                procedure.context.attribute_set("status", "completed")
+                procedure.stop()
+                framework.procedure_delete(procedure)
+                return
+
+            procedure.context.attribute_set("status", "in_process")
+            procedure.nextstate_wait_and_repeat(1)
             return f"degrees: {degrees}"
 
         builder = ProcedureBuilder(f"thermal_{label}")
         builder.step_call(thermal_read)
+        builder.step_call(self.runtime_demo_init_in_loop, {"max_count": 3})
         recorder_procedure = builder.generate_procedure()
         SHOULD_START = True
         if SHOULD_START:

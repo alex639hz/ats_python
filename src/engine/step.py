@@ -28,32 +28,8 @@ class Step:
         pass
 
     def log(self, procedure, log: str | LogInterface):
-        if log == None:
-            return
-
-        if isinstance(log, str):
-            msg = log
-            args = None
-        elif isinstance(log, dict):
-            msg = log["msg"]
-            args = log["args"]
-        else:
-            raise Exception()
-
-        params = {
-            "params": {
-                "proc": procedure.label,
-                "op": self.op.value,
-                "step": self.label,
-                "msg": msg,
-            }
-        }
-
-        if args:
-            params["params"]["args"] = args
-
+        params = procedure.log_build(log)
         procedure.logger.info("-", extra=params)
-        return
 
     def get_arg(self, key):
         return self.args.get(key)

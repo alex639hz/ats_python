@@ -3,9 +3,10 @@ from datetime import datetime
 from engine.constants import *
 from engine.utils import *
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from engine.procedure import Procedure
     from engine.framework import Framework
 
 
@@ -28,7 +29,7 @@ class Context:
         """
         context = {
             "created_at": datetime.now(),
-            "owner_label": self.owner.get_label(),
+            # "owner_label": self.owner.label, # TODO fix
             **session_args,
         }
         self._context = context
@@ -37,8 +38,12 @@ class Context:
     def get_context(self):
         return self._context
 
+    def attribute_delete(self, name):
+        self._context[name] = None
+
+        return self
+
     def attribute_set(self, name, value):
-        """Sets the session data for the procedure."""
         self._context[name] = value
 
         return self

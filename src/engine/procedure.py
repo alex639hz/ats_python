@@ -4,13 +4,14 @@ from typing import TYPE_CHECKING
 import logging
 
 
-from engine.context import Context
 from engine.constants import *
 from engine.utils import *
 from engine.step import Step
 from engine.worker import Worker
 
 from engine.db import Db, database
+
+from engine.context import Context
 
 if TYPE_CHECKING:
     from engine.framework import Framework
@@ -55,22 +56,30 @@ class Procedure:
         return worker
 
     def execution_processor(self, framework: Framework):
+        step = self.get_active_step()
+        self.nextstate_next()
+
         try:
-            step = self.get_active_step()
-            self.nextstate_next()
+
+            RUNTIME_ERROR_EXAMPLE = False
+            if RUNTIME_ERROR_EXAMPLE:
+                raise Exception("example error....")
+
             res = step.func(self)
-            pass
         except Exception as e:
             msg = f"step exception: {step.label or step.func.__name__ or "No step"} {e}"
-            framework.log_err(msg)
-            self.nextstate_exit(msg)
-            return
+            self.log_err(msg)
+            self.nextstate_stop()
+            raise
 
         if res and SHOULD_LOG_STEP:
             step.log(self, res)
 
         self._nextstate_processor()
         return
+
+    def log_err(self, msg, params={}):
+        self.framework.logger.error(msg, extra=params)
 
     def step_append(self, step: Step):
         self._steps.append(step)
@@ -99,6 +108,9 @@ class Procedure:
             return True
 
         return False
+
+    def reset_is_first_run(self):
+        self._is_first_run = True
 
     def start(self):
         self._is_running = True
@@ -186,6 +198,9 @@ class Procedure:
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
         self.push_awake_request(sleep_seconds)
 
+    def nextstate_stop(self, sleep_seconds=None):
+        self.stop()
+
     def nextstate_stay(self, sleep_seconds=None):
         self.push_awake_request(sleep_seconds)
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
@@ -200,12 +215,41 @@ class Procedure:
         )
         # self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, idx)
 
-    def nextstate_exit(self, msg=""):
-        self.framework.call_shutdown(msg)
+    def nextstate_exit(self):
+        """call app shutdown"""
+        self.framework.call_shutdown()
 
     def _increase_index(self):
         self._index += 1
         return self
+
+    def log_build(self, log: str | LogInterface):
+        step = self.get_active_step()
+        if log == None:
+            return
+
+        if isinstance(log, str):
+            msg = log
+            args = None
+        elif isinstance(log, dict):
+            msg = log["msg"]
+            args = log["args"]
+        else:
+            raise Exception()
+
+        params = {
+            "params": {
+                "proc": self.label,
+                "op": step.op.value,
+                "step": step.label,
+                "msg": msg,
+            }
+        }
+
+        if args:
+            params["params"]["args"] = args
+
+        return params
 
 
 class Procedures:
