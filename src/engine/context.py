@@ -10,10 +10,6 @@ if TYPE_CHECKING:
     from engine.framework import Framework
 
 
-COLLECTION_SESSION = "session"
-COLLECTION_CASE = "session"
-
-
 class Context:
     def __init__(self, owner: Procedure | Framework):
         self._context: dict[str, Any] = {}

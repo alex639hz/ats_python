@@ -9,8 +9,6 @@ from engine.utils import *
 from engine.step import Step
 from engine.worker import Worker
 
-from engine.db import Db, database
-
 from engine.context import Context
 
 if TYPE_CHECKING:
@@ -36,7 +34,6 @@ class Procedure:
         self.logger: logging.Logger  # = logging.getLogger("[procedure]")
         self.context = Context(self)
         self.framework: Framework
-        self.db: Db
 
     def framework_set(self, framework: Framework):
         self.logger = framework.logger

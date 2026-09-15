@@ -9,8 +9,8 @@ LOG_FOLDER = Path("C:/ats_log")
 
 LABEL_NONE = None
 LABEL_NAME = "__name__"
-COLLECTION_SESSION = "session"
-COLLECTION_CASE = "case"
+DEF_DB_COL_SESSION = "session"
+DEF_DB_COL_TEST = "test"
 
 
 class DEF_CMD(Enum):

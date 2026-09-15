@@ -25,10 +25,6 @@ class Db:
             raise RuntimeError("pymongo is required for database operations")
         return self.connection[collection]
 
-    # def insert_one(self, collection, doc):
-    #     res = self.connection[collection].insert_one(doc)
-    #     return res.inserted_id
-
     def update_one(self, collection, query, update_doc, upsert=False):
         res = self._collection(collection).update_one(
             query, {"$set": update_doc}, upsert=upsert
@@ -41,22 +37,6 @@ class Db:
 
     def insert_one(self, collection, update_doc):
         res = self._collection(collection).insert_one(update_doc)
-        return res
-
-    def create_session(self, session):
-        res = self._collection(COLLECTION_SESSION).insert_one(session)
-        return res
-
-    def update_session(self, session_id, update_doc):
-        res = self.update_one(COLLECTION_SESSION, {"_id": session_id}, update_doc)
-        return res
-
-    def update_session_result(self, session_id, state: bool):
-        """push state into results array."""
-
-        res = self.push_one(
-            COLLECTION_SESSION, {"_id": session_id}, {"results": state}
-        )
         return res
 
     def find_by_id(self, collection, _id):

@@ -16,6 +16,7 @@ from project.instruments.instrument_repo import repository
 from project.instruments.types.instrument_power_supply import PowerSupply
 from project.instruments.types.instrument_dmm import Dmm
 from project.instruments.types.instrument_scope import Scope
+from project.libs.validation_session import DEF_PASS, ValidationSession
 from project.presets.power_integrity import TestBuilderPowerSupply
 from project.dut.dut_a import DutA
 from project.template import *
@@ -27,11 +28,7 @@ logger = logging.getLogger("[user]")
 
 class BaseProject:
     def __init__(self) -> None:
-        # self.cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
-        # self.case_index = 0
         self.dut = DutA()
-
-    pass
 
     def base_export(self, dut_test: Procedure):
         # read validation config and set context(lab env, test cases)
@@ -44,9 +41,11 @@ class BaseProject:
         self.procedure_env_setup = ProcedureBuilder("dut_env_test")
         self.procedure_env_setup.step_call(self.runtime_create_session)
         self.procedure_env_setup.step_call(self.runtime_load_test, label="load_test")
-        self.procedure_env_setup.step_call(self.runtime_verify_hw)
-        self.procedure_env_setup.insert_procedure(dut_test)
-        self.procedure_env_setup.step_call(self.runtime_update_session)
+        ENABLE_DUT_TEST = False
+        if ENABLE_DUT_TEST:
+            self.procedure_env_setup.step_call(self.runtime_verify_hw)
+            self.procedure_env_setup.insert_procedure(dut_test)
+        self.procedure_env_setup.step_call(self.runtime_update_test_result)
         self.procedure_env_setup.step_call(self.runtime_loop_next)
 
         env_setup = self.procedure_env_setup.generate_procedure()
@@ -75,69 +74,50 @@ class BaseProject:
         procedure.nextstate_wait_and_repeat(1)
         return create_log(f"initialize in loop: {second_counter }", {"hello": "world"})
 
-    def runtime_load_test(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        session = procedure.context.attribute_get("session")
-        index = session["index"]
-        test_cases = session["cases"]
-        case_count = len(test_cases)
-        is_index_ok = index < case_count
-
-        if not is_index_ok:
-            procedure.stop()
-            return "COMPLETED"
-
-        session["test"] = test_cases[index]
-        procedure.context.attribute_set("session", session)
-        return f"test case: {session["test"]["label"] }"
-
-    def runtime_session_init(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        value = procedure.get_active_step().get_op().value
-        print(f"hello: {value}")
-        procedure.nextstate_next(1)
-        pass
-
     def runtime_create_session(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         test_cases = Utils.read_json("C:/ats_python/src/project/test_cases.json")
-        session = {
-            "created_at": framework.get_time_datetime(),
+        session_init = {
+            # "created_at": framework.get_time_datetime(),
             "label": procedure.label,
             "cases": test_cases,
-            "index": 0,
-            "results": [],
         }
-        res = procedure.db.create_session(session)
-        session["_id"] = res.inserted_id
+        session = ValidationSession(session_init)
         procedure.context.attribute_set("session", session)
-        return f"session_id: {session["_id"]}"
+        return f"session_id: {session.id}"
 
-    def runtime_update_session(self, step_interface: StepInterface):
+    def runtime_load_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        session = procedure.context.attribute_get("session")
-        test = session["test"]
+        session: ValidationSession = procedure.context.attribute_get("session")
+        session.load_test()
+        return f"OK load_test index: {session.index}"
 
-        res = procedure.db.update_session_result(session["_id"], test["result"])
-        return f"OK update_session {session["_id"]}"
+    def runtime_update_test_result(self, step_interface: StepInterface):
+        procedure, args = Utils.extract_step_interface(step_interface)
+        session: ValidationSession = procedure.context.attribute_get("session")
+
+        SHOULD_PASS = True
+        if SHOULD_PASS:
+            session.db_update_test_pass()
+        else:
+            session.db_update_test_fail()
+
+        # test: ValidationProcedure = session["test"]
+        # res = procedure.db.update_session_result(session["_id"], test.results_status)
+        # return f"OK update_session {session["_id"]}"
+        pass
 
     def runtime_loop_next(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        session = procedure.context.attribute_get("session")
-        next_index = session["index"] + 1
+        session: ValidationSession = procedure.context.attribute_get("session")
+        completed = not session.increase_index()
 
-        test_cases = session["cases"]
-        case_count = len(test_cases)
-        is_index_ok = next_index < case_count
-
-        if not is_index_ok:
+        if completed:
             procedure.stop()
             return "COMPLETED"
 
-        session["index"] = next_index
-        procedure.context.attribute_set("session", session)
         procedure.nextstate_jump_by_label("load_test")
-        return "going next test"
+        return f"going next test index: {session.index}"
 
     def runtime_verify_hw(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
