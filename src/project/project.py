@@ -131,7 +131,7 @@ class Project(BaseProject):
         address = args["address"]
         value = args["value"]
         dut: DutA = procedure.context.attribute_get("dut")
-        dut.register_write(address, value)
+        # dut.register_write(address, value)
         return f"write register address:{address} value{value}"
 
     def runtime_call_template(self, step_interface: StepInterface):
