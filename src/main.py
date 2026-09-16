@@ -3,7 +3,7 @@
 from engine.framework import framework
 from project.project import Project
 
-SHOULD_START_API_SERVER = True
+SHOULD_START_API_SERVER = False
 
 try:
 

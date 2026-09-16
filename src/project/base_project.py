@@ -31,24 +31,16 @@ class BaseProject:
         self.dut = DutA()
 
     def base_export(self, dut_test: Procedure):
-        # read validation config and set context(lab env, test cases)
-        # create db session
-        # set lab env (scope,dmm, thermal)
-        # set dut (power calibration)
-        # execute test
-        # save test results in db
-        # repeat for every test case
-        self.procedure_env_setup = ProcedureBuilder("dut_env_test")
-        self.procedure_env_setup.step_call(self.runtime_create_session)
-        self.procedure_env_setup.step_call(self.runtime_load_test, label="load_test")
+        builder = ProcedureBuilder("dut_env_test")
+        builder.step_call(self.runtime_create_session)
+        builder.step_call(self.runtime_create_test, label="load_test")
         ENABLE_DUT_TEST = False
         if ENABLE_DUT_TEST:
-            self.procedure_env_setup.step_call(self.runtime_verify_hw)
-            self.procedure_env_setup.insert_procedure(dut_test)
-        self.procedure_env_setup.step_call(self.runtime_update_test_result)
-        self.procedure_env_setup.step_call(self.runtime_loop_next)
+            builder.insert_procedure(dut_test)
+        builder.step_call(self.runtime_update_test_result)
+        builder.step_call(self.runtime_loop_next)
 
-        env_setup = self.procedure_env_setup.generate_procedure()
+        env_setup = builder.generate_procedure()
         return env_setup
 
     def runtime_demo_init_once(self, step_interface: StepInterface):
@@ -86,7 +78,7 @@ class BaseProject:
         procedure.context.attribute_set("session", session)
         return f"session_id: {session.id}"
 
-    def runtime_load_test(self, step_interface: StepInterface):
+    def runtime_create_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         session: ValidationSession = procedure.context.attribute_get("session")
         session.load_test()
@@ -95,21 +87,17 @@ class BaseProject:
     def runtime_update_test_result(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         session: ValidationSession = procedure.context.attribute_get("session")
-
-        SHOULD_PASS = True
-        if SHOULD_PASS:
-            session.db_update_test_pass()
+        test_case = session.get_active_case()
+        if test_case["result"]:
+            session.test_set_pass()
         else:
-            session.db_update_test_fail()
-
-        # test: ValidationProcedure = session["test"]
-        # res = procedure.db.update_session_result(session["_id"], test.results_status)
-        # return f"OK update_session {session["_id"]}"
-        pass
+            session.test_set_fail()
+        return DEF_OK
 
     def runtime_loop_next(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         session: ValidationSession = procedure.context.attribute_get("session")
+        session.session_update_result()
         completed = not session.increase_index()
 
         if completed:
@@ -121,22 +109,6 @@ class BaseProject:
 
     def runtime_verify_hw(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-
-        def create_case():
-            session = procedure.context.attribute_get("session")
-            session_id = session["_id"]
-            selected_case = session["cases"][0]
-            created_at = framework.get_time_datetime()
-
-            case = {
-                "created_at": created_at,
-                "session_id": session_id,
-                "case": selected_case,
-            }
-            res = procedure.db.insert_one(COLLECTION_CASE, case)
-            case_id = res.inserted_id
-            procedure.context.attribute_set("case_id", case_id)
-            procedure.context.attribute_set("case", case)
 
         def setup_env():
 
