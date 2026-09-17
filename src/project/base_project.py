@@ -39,6 +39,11 @@ class BaseProject:
             builder.insert_procedure(dut_test)
         builder.step_call(self.runtime_update_test_result)
         builder.step_call(self.runtime_loop_next)
+        SHOULD_STOP_PROCEDURE = True
+        if SHOULD_STOP_PROCEDURE:
+            builder.step_procedure_stop("bye bye ...")
+        else:
+            builder.step_framework_exit("bye bye ...")
 
         env_setup = builder.generate_procedure()
         return env_setup
@@ -101,7 +106,7 @@ class BaseProject:
         completed = not session.increase_index()
 
         if completed:
-            procedure.stop()
+            # procedure.stop()
             return "COMPLETED"
 
         procedure.nextstate_jump_by_label("load_test")

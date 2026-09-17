@@ -177,7 +177,7 @@ class Framework:
             DEF_CMD.PROCEDURE_APPEND: add_new_procedure,
             DEF_CMD.PROCEDURE_DELETE: delete_procedure,
             DEF_CMD.PROCEDURE_AWAKE: procedure_awake,
-            DEF_CMD.EXIT: exit,
+            DEF_CMD.FRAMEWORK_EXIT: exit,
         }
         return func_dict[func_name]
 
@@ -195,7 +195,7 @@ class Framework:
     # self.pipe_eng.put(Utils.q_element_create(element.value, args))
 
     def call_shutdown(self, msg=""):
-        self.pipe_eng.element_push(DEF_CMD.EXIT)
+        self.pipe_eng.element_push(DEF_CMD.FRAMEWORK_EXIT)
 
     def log_msg(self, msg, params={}):
         self.logger.info(msg, extra=params)

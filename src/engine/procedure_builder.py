@@ -35,8 +35,11 @@ class ProcedureBuilder:
     def add_step_null(self, label):
         self.append_step_by_elements(STEP.NULL, NOARG, label)
 
-    def add_step_exit(self, msg=""):
+    def step_framework_exit(self, msg=""):
         self.append_step_by_elements(STEP.EXIT, NOARG, msg)
+
+    def step_procedure_stop(self, msg=""):
+        self.append_step_by_elements(STEP.PROCEDURE_STOP, NOARG, msg)
 
     def insert_procedure(self, procedure_to_insert: Procedure):
         for step in procedure_to_insert._steps:

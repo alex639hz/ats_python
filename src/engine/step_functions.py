@@ -5,7 +5,7 @@ from engine.constants import *
 from engine.utils import *
 from engine.framework import framework
 
-from typing import Callable, TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING
 
 from engine.worker import Worker
 
