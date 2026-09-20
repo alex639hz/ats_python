@@ -18,8 +18,13 @@ def null(procedure: Procedure):
     return "null_operation executed"
 
 
-def exit(procedure: Procedure):
+def framework_exit(procedure: Procedure):
     procedure.framework.call_shutdown()
+    return DEF_OK
+
+
+def procedure_stop(procedure: Procedure):
+    procedure.stop
     return DEF_OK
 
 
@@ -169,7 +174,8 @@ step_functions = {
     # DEF_STEP_OP.EXIT: exit,
     # DEF_STEP_OP.SCPI_REQUEST: scpi_request,
     STEP.NULL: null,
-    STEP.EXIT: exit,
+    STEP.FRAMEWORK_EXIT: framework_exit,
+    STEP.PROCEDURE_STOP: procedure_stop,
     STEP.FUNCTION_CALL: function_call,
     STEP.DELAY_START: delay_start,
     STEP.DELAY_WAIT: delay_check,

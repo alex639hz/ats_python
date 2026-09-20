@@ -39,11 +39,12 @@ class BaseProject:
             builder.insert_procedure(dut_test)
         builder.step_call(self.runtime_update_test_result)
         builder.step_call(self.runtime_loop_next)
-        SHOULD_STOP_PROCEDURE = True
+        SHOULD_STOP_PROCEDURE = False
+        SHOULD_EXIT_FRAMEWORK = True
         if SHOULD_STOP_PROCEDURE:
-            builder.step_procedure_stop("bye bye ...")
-        else:
-            builder.step_framework_exit("bye bye ...")
+            builder.step_procedure_stop("procedure stop ...", "stop_procedure")
+        elif SHOULD_EXIT_FRAMEWORK:
+            builder.step_framework_exit("framework exit ...")
 
         env_setup = builder.generate_procedure()
         return env_setup

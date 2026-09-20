@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Final
 from pathlib import Path
 from engine.constants import *
 
-# from engine.procedure import Procedure
-
 if TYPE_CHECKING:
     from engine.types import LogInterface, StepInterface
 
@@ -51,54 +49,6 @@ class Utils:
             daemon=daemon,
         )
         return thread
-
-    @staticmethod
-    def is_scpi_query(cmd: str) -> bool:
-        """Returns True if the command is a SCPI query (i.e., ends with a '?'). This is a simple heuristic and may not cover all cases, but it works for most standard SCPI commands."""
-        header = cmd.strip().split(maxsplit=1)[0]
-        return header.endswith("?")
-
-    @staticmethod
-    def is_scpi_big_query(scpi_cmd: str) -> bool:
-        # Common SCPI keywords that usually return binary block data
-        _BIG_QUERY_KEYWORDS: Final[tuple[str, ...]] = (
-            "WAV",
-            "WAVE",
-            "DATA",
-            "TRAC",
-            "TRACE",
-            "MMEM",
-            "MEM",
-            "HCOP",
-            "HCOPY",
-            "DIG",
-            "DIGITIZE",
-            "CAPT",
-            "IMAGE",
-            "IMAG",
-            "SCREEN",
-            "SYST:SET",
-            "SYSTEM:SET",
-        )
-
-        """
-        Returns True if the SCPI command is likely to return binary block data.
-        """
-        if not scpi_cmd:
-            return False
-
-        scpi_cmd = scpi_cmd.strip().upper()
-
-        # 1. Must be a query
-        if "?" not in scpi_cmd:
-            return False
-
-        # 2. Match known binary-producing keywords
-        for keyword in _BIG_QUERY_KEYWORDS:
-            if keyword in scpi_cmd:
-                return True
-
-        return False
 
     @staticmethod
     def atomic_file_write_text(path: Path, data: str) -> None:

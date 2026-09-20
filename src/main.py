@@ -4,13 +4,13 @@ from engine.framework import framework
 from project.project import Project
 
 SHOULD_START_API_SERVER = False
+if SHOULD_START_API_SERVER:
+    framework.start_api_server()
+
+project = Project()
 
 try:
 
-    if SHOULD_START_API_SERVER:
-        framework.start_api_server()
-
-    project = Project()
     framework.wait_shutdown()
 
 except KeyboardInterrupt:

@@ -31,7 +31,7 @@ class STEP(Enum):
     PROCEDURE_STOP = "PROCEDURE_STOP"  # stop procedure
     JUMP_TO_STEP = "JUMP_TO_STEP"  # jump to step by label
     ENGINE_STOP = "ENGINE_STOP"  # exit engine app
-    EXIT = "EXIT"  # exit app
+    FRAMEWORK_EXIT = "FRAMEWORK_EXIT"  # exit app
     DELAY_START = "TIMER_START"  # start a timer
     DELAY_WAIT = "TIMER_WAIT"  # wait for a timer to complete
     SCRIPT_RUN = "SCRIPT_RUN"  # execute external script

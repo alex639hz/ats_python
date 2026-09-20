@@ -3,14 +3,11 @@
 import logging
 import time
 
-# from engine import utils
 from engine.framework import framework
 from engine.logger import create_log
 from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
 from engine.constants import *
-
-# from instruments.instrument import Instrument
 from engine.utils import Utils
 from project.base_project import BaseProject
 from project.presets.power_integrity import TestBuilderPowerSupply
@@ -160,14 +157,9 @@ class Project(BaseProject):
         res = test_a.context.attribute_get("result")
         pass
 
-    def runtime_post_exec(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-
-        case_id = procedure.context.attribute_get("case_id")
-        result = procedure.context.attribute_get("result")
-        res = procedure.db.update_one(
-            COLLECTION_CASE, {"_id": case_id}, {"result": result}
-        )
+    def get_waveform_procedure(self):
+        scope: Scope = repository.get_instrument_by_label("scope")
+        scope.get_waveform_single()
 
     @staticmethod
     def my_worker(step_interface: StepInterface):
