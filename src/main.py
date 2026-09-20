@@ -1,13 +1,19 @@
 """Author: Alex Zvuluny | Email: alex.639hz@gmail.com"""
 
+from dut_test import DutTest
 from engine.framework import framework
-from project.project import Project
 
 SHOULD_START_API_SERVER = False
 if SHOULD_START_API_SERVER:
     framework.start_api_server()
 
-project = Project()
+config = {
+    "phase": "A0",
+    "phases": ["A0", "A1", "A2"],
+}
+
+
+project = DutTest(config)
 
 try:
 

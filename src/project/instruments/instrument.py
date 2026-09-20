@@ -343,18 +343,6 @@ class Instrument:
     def close(self):
         self.connection.close()
 
-    @staticmethod
-    def get_scpi_operation(scpi_cmd) -> Instrument.ScpiOperation:
-        is_query = Utils.is_scpi_query(scpi_cmd)
-        is_big_query = Utils.is_scpi_big_query(scpi_cmd)
-
-        # if is_big_query:
-        #     return Instrument.ScpiOperation.BIG_QUERY
-        if is_query:
-            return Instrument.ScpiOperation.QUERY
-        else:
-            return Instrument.ScpiOperation.WRITE
-
     # TODO verify if needed: virtual_server_start_many
     @staticmethod
     def virtual_server_start_many(instruments: List[Instrument]) -> None:
@@ -460,3 +448,63 @@ class Instrument:
             instance = Instrument.get_by_label(label)
             instances.append(instance)
         return instances
+
+    @staticmethod
+    def get_scpi_operation(scpi_cmd) -> Instrument.ScpiOperation:
+        is_query = Instrument.is_scpi_query(scpi_cmd)
+        is_big_query = Instrument.is_scpi_big_query(scpi_cmd)
+
+        # if is_big_query:
+        #     return Instrument.ScpiOperation.BIG_QUERY
+        if is_query:
+            return Instrument.ScpiOperation.QUERY
+        else:
+            return Instrument.ScpiOperation.WRITE
+
+    @staticmethod
+    def is_scpi_query(cmd: str) -> bool:
+        """Returns True if the command is a SCPI query (i.e., ends with a '?'). This is a simple heuristic and may not cover all cases, but it works for most standard SCPI commands."""
+        header = cmd.strip().split(maxsplit=1)[0]
+        return header.endswith("?")
+
+    @staticmethod
+    def is_scpi_big_query(scpi_cmd: str) -> bool:
+        # Common SCPI keywords that usually return binary block data
+        _BIG_QUERY_KEYWORDS: Final[tuple[str, ...]] = (
+            "WAV",
+            "WAVE",
+            "DATA",
+            "TRAC",
+            "TRACE",
+            "MMEM",
+            "MEM",
+            "HCOP",
+            "HCOPY",
+            "DIG",
+            "DIGITIZE",
+            "CAPT",
+            "IMAGE",
+            "IMAG",
+            "SCREEN",
+            "SYST:SET",
+            "SYSTEM:SET",
+        )
+
+        """
+        Returns True if the SCPI command is likely to return binary block data.
+        """
+        if not scpi_cmd:
+            return False
+
+        scpi_cmd = scpi_cmd.strip().upper()
+
+        # 1. Must be a query
+        if "?" not in scpi_cmd:
+            return False
+
+        # 2. Match known binary-producing keywords
+        for keyword in _BIG_QUERY_KEYWORDS:
+            if keyword in scpi_cmd:
+                return True
+
+        return False

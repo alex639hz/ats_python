@@ -62,6 +62,7 @@ class Scope(Instrument):
 
     def get_waveform_single(self):
         self.request(":SINGle")
+        self.request(":TRIGger:FORCe")
 
     def get_waveform_points(self):
         self.request(":WAVeform:POINts?")

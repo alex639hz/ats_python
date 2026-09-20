@@ -18,7 +18,8 @@ from project.instruments.types.instrument_dmm import Dmm
 from project.instruments.types.instrument_scope import Scope
 from project.libs.validation_session import DEF_PASS, ValidationSession
 from project.presets.power_integrity import TestBuilderPowerSupply
-from project.dut.dut_a import DutA
+
+# from project.dut.dut_a import DutA
 from project.template import *
 
 LABEL_SESSION = "create_session"
@@ -27,8 +28,9 @@ logger = logging.getLogger("[user]")
 
 
 class BaseProject:
-    def __init__(self) -> None:
-        self.dut = DutA()
+    def __init__(self, config) -> None:
+        # self.dut = DutA()
+        pass
 
     def base_export(self, dut_test: Procedure):
         builder = ProcedureBuilder("dut_env_test")
@@ -40,7 +42,7 @@ class BaseProject:
         builder.step_call(self.runtime_update_test_result)
         builder.step_call(self.runtime_loop_next)
         SHOULD_STOP_PROCEDURE = False
-        SHOULD_EXIT_FRAMEWORK = True
+        SHOULD_EXIT_FRAMEWORK = False
         if SHOULD_STOP_PROCEDURE:
             builder.step_procedure_stop("procedure stop ...", "stop_procedure")
         elif SHOULD_EXIT_FRAMEWORK:

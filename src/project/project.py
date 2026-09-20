@@ -14,25 +14,25 @@ from project.presets.power_integrity import TestBuilderPowerSupply
 from project.dut.dut_a import DutA
 from project.template import *
 
-LABEL_SESSION = "create_session"
-LABEL_PREPARE_TEST = "prepare_test"
 logger = logging.getLogger("[user]")
 
 
 class Project(BaseProject):
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
+
+    def project_export(self, config):
 
         dut_test = self.build_test_procedure()
-        USE_BASE_PROJECT = True
+        USE_BASE_PROJECT = False
         if USE_BASE_PROJECT:
             final_procedure = self.base_export(dut_test)
         else:
             final_procedure = dut_test
 
         final_procedure.start()
-        framework.procedure_append(final_procedure)
+        return final_procedure
 
     def build_test_procedure(self):
         builder = ProcedureBuilder("dut_test")
@@ -40,7 +40,8 @@ class Project(BaseProject):
             self.runtime_dut_set_register,
             {"address": DutA.REG1, "value": DutA.REG1_SETUP_A},
         )
-        builder.step_call(self.runtime_demo_dut_test)
+        builder.step_call(self.runtime_start_thermal_read)
+        builder.step_call(self.runtime_dut_test)
         dut_test = builder.generate_procedure()
         return dut_test
 
@@ -48,7 +49,7 @@ class Project(BaseProject):
         builder = ProcedureBuilder("dut_test")
 
         builder.step_call(self.runtime_demo_init_once)
-        builder.step_call(self.runtime_demo_start_recorder)
+        builder.step_call(self.runtime_start_thermal_read)
         builder.step_call(self.runtime_demo_init_in_loop)
         builder.step_call(self.runtime_demo_close_recorder)
 
@@ -69,7 +70,7 @@ class Project(BaseProject):
         dut.register_write(dut.REG1, 10)
         pass
 
-    def runtime_demo_dut_test(self, step_interface: StepInterface):
+    def runtime_dut_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
         is_first_run = procedure.is_first_run()
         if is_first_run:
@@ -89,38 +90,34 @@ class Project(BaseProject):
 
         procedure.nextstate_wait_and_repeat(1)
         return f"www {status}"
-        # else:
-        # raise Exception("Error Occurred in dut test")
 
-    def runtime_demo_start_recorder(self, step_interface: StepInterface):
-        # return
+    def runtime_start_thermal_read(self, step_interface: StepInterface):
 
         def thermal_read(step_interface: StepInterface):
+            READ_INTERVAL_SECONDS = 2
             procedure, args = Utils.extract_step_interface(step_interface)
             step_label = procedure.get_active_step().label
-            framework.log_msg(f"proc:{procedure.label} step: {step_label}")
-            procedure.nextstate_wait_and_repeat(2)
+            procedure.nextstate_wait_and_repeat(READ_INTERVAL_SECONDS)
+            return f"proc:{procedure.label} step: {step_label}"
 
         procedure, args = Utils.extract_step_interface(step_interface)
         builder = ProcedureBuilder("thermal_recorder")
         builder.step_call(thermal_read)
-        recorder_procedure = builder.generate_procedure()
-        framework.procedure_append(recorder_procedure)
-        recorder_procedure.start()
-        framework.context.attribute_set("recorder_procedure", recorder_procedure)
-        framework.log_msg(f"proc:{procedure.label} runtime_demo_start_recorder")
-
-        pass
+        thermal_read_procedure = builder.generate_procedure()
+        thermal_read_procedure.start()
+        framework.procedure_append(thermal_read_procedure)
+        framework.context.attribute_set("thermal_read", thermal_read_procedure)
+        return f"proc:{procedure.label} runtime_demo_start_recorder"
 
     def runtime_demo_close_recorder(self, step_interface: StepInterface):
         # return
         # procedure, args = Utils.extract_step_interface(step_interface)
         # step_label = procedure.get_active_step().label
-        framework.log_msg(f"runtime_demo_close_recorder: {""}")
-        recorder_procedure: Procedure = framework.context.attribute_get(
-            "recorder_procedure"
+        # framework.log_msg(f"runtime_demo_close_recorder: {""}")
+        thermal_read_procedure: Procedure = framework.context.attribute_get(
+            "thermal_read"
         )
-        recorder_procedure.stop()
+        thermal_read_procedure.stop()
         pass
 
     def runtime_dut_set_register(self, step_interface: StepInterface):
