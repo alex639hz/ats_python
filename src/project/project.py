@@ -21,29 +21,24 @@ class Project(BaseProject):
 
     def __init__(self, config):
         super().__init__(config)
+        self.dut = DutA()
 
-    def project_export(self, config):
-
-        dut_test = self.build_test_procedure()
-        USE_BASE_PROJECT = False
+    def project_export(self, config, dut_test_):
+        builder = ProcedureBuilder("project_alfa")
+        builder.step_call(dut_test_)
+        dut_project_procedure = builder.generate_procedure()
+        # dut_test_procedure = self.build_dut_test(dut_test_)
+        USE_BASE_PROJECT = True
         if USE_BASE_PROJECT:
-            final_procedure = self.base_export(dut_test)
+            final_procedure = self.base_export(dut_project_procedure)
         else:
-            final_procedure = dut_test
+            final_procedure = dut_project_procedure
 
-        final_procedure.start()
         return final_procedure
 
-    def build_test_procedure(self):
-        builder = ProcedureBuilder("dut_test")
-        builder.step_call(
-            self.runtime_dut_set_register,
-            {"address": DutA.REG1, "value": DutA.REG1_SETUP_A},
-        )
-        builder.step_call(self.runtime_start_thermal_read)
-        builder.step_call(self.runtime_dut_test)
-        dut_test = builder.generate_procedure()
-        return dut_test
+    # def build_dut_test(self, dut_test_):
+
+    #     return dut_test
 
     def demo_build_automation_example_2(self):
         builder = ProcedureBuilder("dut_test")
@@ -67,29 +62,8 @@ class Project(BaseProject):
     def dut_init(self):
         dut = DutA()
         dut.open()
-        dut.register_write(dut.REG1, 10)
+        dut.reg8_write(dut.REG1, 10)
         pass
-
-    def runtime_dut_test(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        is_first_run = procedure.is_first_run()
-        if is_first_run:
-            thermal = self.get_thermal(25, "starter")
-            procedure.context.attribute_set("thermal", thermal)
-
-        thermal: Procedure = procedure.context.attribute_get("thermal")
-
-        status = thermal.context.attribute_get("status")
-        # if status == "in_process":
-        if status == "completed":
-            # procedure.nextstate_wait_and_repeat(1)
-            # thermal = procedure.context.attribute_delete("thermal")
-
-            procedure.reset_is_first_run()
-            return f"www ---completed---- {status}"
-
-        procedure.nextstate_wait_and_repeat(1)
-        return f"www {status}"
 
     def runtime_start_thermal_read(self, step_interface: StepInterface):
 
@@ -181,18 +155,3 @@ class Project(BaseProject):
             pass
 
         return None
-
-
-def create_procedure_with_preset() -> Procedure:
-    def my_func():
-        pass
-
-    test = TestBuilderPowerSupply()
-    test.step_init_test(my_func)
-    test.step_setup_inst(my_func)
-    test.step_dut_setup(my_func)
-    test.step_start_measurement(my_func)
-    test.step_generate_report(my_func)
-    procedure = test.build("power supply test")
-
-    return procedure

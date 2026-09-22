@@ -13,63 +13,31 @@ logger = logging.getLogger("[user]")
 
 class DutTest(Project):
 
-    def __init__(self, config) -> None:
+    def __init__(self, config):
 
         super().__init__(config)
 
-        dut_test = self.build_test_procedure()
-        USE_BASE_PROJECT = False
+        dut_test = self.build_dut_test()
+        USE_BASE_PROJECT = True
         if USE_BASE_PROJECT:
-            final_procedure = self.project_export(dut_test)
+            final_procedure = self.project_export(config, dut_test)
         else:
             final_procedure = dut_test
 
         final_procedure.start()
         framework.procedure_append(final_procedure)
 
-    def build_test_procedure(self):
+    def build_dut_test(self) -> Procedure:
         builder = ProcedureBuilder("dut_test")
-        builder.step_call(
-            self.runtime_dut_set_register,
-            {"address": DutA.REG1, "value": DutA.REG1_SETUP_A},
-        )
-        builder.step_call(self.runtime_start_thermal_read)
         builder.step_call(self.runtime_dut_test)
         dut_test = builder.generate_procedure()
         return dut_test
 
-    def demo_build_automation_example_2(self):
-        builder = ProcedureBuilder("dut_test")
-
-        builder.step_call(self.runtime_demo_init_once)
-        builder.step_call(self.runtime_start_thermal_read)
-        builder.step_call(self.runtime_demo_init_in_loop)
-        builder.step_call(self.runtime_demo_close_recorder)
-
-        dut_test_procedure = builder.generate_procedure()
-
-        SHOULD_USE_BASE_PROJECT = False
-        if SHOULD_USE_BASE_PROJECT:
-            # TODO fix below line
-            # self.base_export(self.dut_init, self.dut_test)
-            pass
-        else:
-            framework.procedure_append(dut_test_procedure)
-            dut_test_procedure.start()
-
-    def dut_init(self):
-        dut = DutA()
-        dut.open()
-        dut.register_write(dut.REG1, 10)
-        pass
-
     def runtime_dut_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        is_first_run = procedure.is_first_run()
-        if is_first_run:
-            thermal = self.get_thermal(25, "starter")
-            procedure.context.attribute_set("thermal", thermal)
-
+        # self.init_repo_by_json()
+        scope: Scope = repository.get_instrument_by_label("scope")
+        dmm: Dmm = repository.get_instrument_by_label("dmm")
         thermal: Procedure = procedure.context.attribute_get("thermal")
 
         status = thermal.context.attribute_get("status")

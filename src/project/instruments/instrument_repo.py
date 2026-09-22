@@ -1,4 +1,6 @@
+import json
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 # from instruments.instrument_repo import repository
@@ -49,6 +51,14 @@ class InstrumentRepo:
         for instrument_label, instrument_instance in self.repo.items():
             res.append(instrument_instance.api_std_idn())
         return res
+
+    def initialize_with_json(self, json_path):
+        path: Path = Path(json_path)
+        with path.open(encoding="utf-8") as f:
+            json_payload = json.load(f)
+
+        for instrument in json_payload:
+            self.instrument_factory(instrument)
 
     @staticmethod
     def is_instance_of_or_throw(instrument: Instrument, instance: Any) -> bool:

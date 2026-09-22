@@ -18,27 +18,25 @@ from project.instruments.types.instrument_dmm import Dmm
 from project.instruments.types.instrument_scope import Scope
 from project.libs.validation_session import DEF_PASS, ValidationSession
 from project.presets.power_integrity import TestBuilderPowerSupply
-
-# from project.dut.dut_a import DutA
 from project.template import *
 
-LABEL_SESSION = "create_session"
-LABEL_PREPARE_TEST = "prepare_test"
+# from project.dut.dut_a import DutA
+
 logger = logging.getLogger("[user]")
 
 
 class BaseProject:
-    def __init__(self, config) -> None:
-        # self.dut = DutA()
+    def __init__(self, config):
+        self.init_repo_by_json()
         pass
 
-    def base_export(self, dut_test: Procedure):
-        builder = ProcedureBuilder("dut_env_test")
+    def base_export(self, project_procedure: Procedure):
+        builder = ProcedureBuilder("base_project_alfa")
         builder.step_call(self.runtime_create_session)
         builder.step_call(self.runtime_create_test, label="load_test")
         ENABLE_DUT_TEST = False
         if ENABLE_DUT_TEST:
-            builder.insert_procedure(dut_test)
+            builder.insert_procedure(project_procedure)
         builder.step_call(self.runtime_update_test_result)
         builder.step_call(self.runtime_loop_next)
         SHOULD_STOP_PROCEDURE = False
@@ -115,30 +113,21 @@ class BaseProject:
         procedure.nextstate_jump_by_label("load_test")
         return f"going next test index: {session.index}"
 
+    def init_repo_by_json(self):
+        json_path = f"C:/ats_python/src/project/instruments.json"
+        repository.initialize_with_json(json_path)
+        dmm: Dmm = repository.get_instrument_by_label("dmm")
+        ps: PowerSupply = repository.get_instrument_by_label("ps")
+
+        dmm.setup()
+        ps.setup()
+
     def runtime_verify_hw(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
 
-        def setup_env():
-
-            def initialize_instruments(_path):
-                path: Path = Path(_path)
-                with path.open(encoding="utf-8") as f:
-                    json_payload = json.load(f)
-
-                # TODO does instrument_by_label required? check repository instead
-                for instrument in json_payload:
-                    repository.instrument_factory(instrument)
-
-            initialize_instruments(f"C:/ats_python/src/project/instruments.json")
-            dmm: Dmm = repository.get_instrument_by_label("dmm")
-            ps: PowerSupply = repository.get_instrument_by_label("ps")
-
-            dmm.setup()
-            ps.setup()
-
-        def setup_dut():
-            self.dut.register_write(self.dut.REG1, self.dut.REG1_SETUP_C)
-            self.dut.bit_write(self.dut.BIT0, self.dut.BIT_ON)
+        # def setup_dut():
+        #     self.dut.register_write(self.dut.REG1, self.dut.REG1_SETUP_C)
+        #     self.dut.bit_write(self.dut.BIT0, self.dut.BIT_ON)
 
         # create_case()
 
@@ -180,18 +169,3 @@ class BaseProject:
             framework.procedure_append(recorder_procedure)
 
         return recorder_procedure
-
-
-def create_procedure_with_preset() -> Procedure:
-    def my_func():
-        pass
-
-    test = TestBuilderPowerSupply()
-    test.step_init_test(my_func)
-    test.step_setup_inst(my_func)
-    test.step_dut_setup(my_func)
-    test.step_start_measurement(my_func)
-    test.step_generate_report(my_func)
-    procedure = test.build("power supply test")
-
-    return procedure

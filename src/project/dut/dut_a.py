@@ -33,16 +33,30 @@ class DutA(DutRegisterMap):
     def close(self):
         self.connection = False
 
-    def register_write(self, address: RegisterAddress, value: int):
+    def reg8_write(self, address: RegisterAddress, value: int):
         self.reg_store[address] = value
         time.sleep(0.1)
 
-    def register_read(self, address: RegisterAddress) -> int:
+    def reg8_read(self, address: RegisterAddress) -> int:
+        return self.reg_store.get(address, 0)
+
+    def reg16_write(self, address: RegisterAddress, value: int):
+        self.reg_store[address] = value
+        time.sleep(0.1)
+
+    def reg16_read(self, address: RegisterAddress) -> int:
+        return self.reg_store.get(address, 0)
+
+    def reg32_write(self, address: RegisterAddress, value: int):
+        self.reg_store[address] = value
+        time.sleep(0.1)
+
+    def reg32_read(self, address: RegisterAddress) -> int:
         return self.reg_store.get(address, 0)
 
     def bit_write(self, bit_address: BitAddress, value: BitValue):
         register_address, bit_idx = extract_bit_address(bit_address)
-        init_value = self.register_read(register_address)
+        init_value = self.reg8_read(register_address)
         # register = Register(init_value)
         # new_value = register.write_bit(bit_idx, value)
         # self.register_write(register_address, new_value)
@@ -50,7 +64,7 @@ class DutA(DutRegisterMap):
 
     def bit_read(self, bit_address: BitAddress):
         register_address, bit_idx = extract_bit_address(bit_address)
-        init_value = self.register_read(register_address)
+        init_value = self.reg8_read(register_address)
         # register = Register(init_value)
         # return register.read_bit(bit_idx)
         return
