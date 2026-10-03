@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ats-framework": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\YOUR_USERNAME\\path\\to\\ats_python\\mcp_server_launcher.py"
+      ],
+      "disabled": false,
+      "autostart": true
+    }
+  }
+}
