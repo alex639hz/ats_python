@@ -30,24 +30,24 @@ class BaseProject:
         self.init_repo_by_json()
         pass
 
-    def base_export(self, project_procedure: Procedure):
-        builder = ProcedureBuilder("base_project_alfa")
-        builder.step_call(self.runtime_create_session)
-        builder.step_call(self.runtime_create_test, label="load_test")
+    def base_flow_export(self, project_procedure: Procedure):
+        base_flow_build = ProcedureBuilder("base_project_alfa")
+        base_flow_build.step_call(self.runtime_create_session)
+        base_flow_build.step_call(self.runtime_create_test, label="load_test")
         ENABLE_DUT_TEST = False
         if ENABLE_DUT_TEST:
-            builder.insert_procedure(project_procedure)
-        builder.step_call(self.runtime_update_test_result)
-        builder.step_call(self.runtime_loop_next)
+            base_flow_build.insert_procedure(project_procedure)
+        base_flow_build.step_call(self.runtime_update_test_result)
+        base_flow_build.step_call(self.runtime_loop_next)
         SHOULD_STOP_PROCEDURE = False
         SHOULD_EXIT_FRAMEWORK = False
         if SHOULD_STOP_PROCEDURE:
-            builder.step_procedure_stop("procedure stop ...", "stop_procedure")
+            base_flow_build.step_procedure_stop("procedure stop ...", "stop_procedure")
         elif SHOULD_EXIT_FRAMEWORK:
-            builder.step_framework_exit("framework exit ...")
+            base_flow_build.step_framework_exit("framework exit ...")
 
-        env_setup = builder.generate_procedure()
-        return env_setup
+        base_flow = base_flow_build.generate_procedure()
+        return base_flow
 
     def runtime_demo_init_once(self, step_interface: StepInterface):
         # return

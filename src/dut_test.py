@@ -20,7 +20,7 @@ class DutTest(Project):
         dut_test = self.build_dut_test()
         USE_BASE_PROJECT = True
         if USE_BASE_PROJECT:
-            final_procedure = self.project_export(config, dut_test)
+            final_procedure = self.project_export(dut_test)
         else:
             final_procedure = dut_test
 
@@ -28,10 +28,10 @@ class DutTest(Project):
         framework.procedure_append(final_procedure)
 
     def build_dut_test(self) -> Procedure:
-        builder = ProcedureBuilder("dut_test")
-        builder.step_call(self.runtime_dut_test)
-        dut_test = builder.generate_procedure()
-        return dut_test
+        dut_flow_build = ProcedureBuilder("dut_test")
+        dut_flow_build.step_call(self.runtime_dut_test)
+        dut_flow = dut_flow_build.generate_procedure()
+        return dut_flow
 
     def runtime_dut_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)

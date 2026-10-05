@@ -23,14 +23,14 @@ class Project(BaseProject):
         super().__init__(config)
         self.dut = DutA()
 
-    def project_export(self, config, dut_test_):
-        builder = ProcedureBuilder("project_alfa")
-        builder.step_call(dut_test_)
-        dut_project_procedure = builder.generate_procedure()
+    def project_export(self, dut_test_):
+        project_flow_build = ProcedureBuilder("project_alfa")
+        project_flow_build.step_call(dut_test_)
+        dut_project_procedure = project_flow_build.generate_procedure()
         # dut_test_procedure = self.build_dut_test(dut_test_)
         USE_BASE_PROJECT = True
         if USE_BASE_PROJECT:
-            final_procedure = self.base_export(dut_project_procedure)
+            final_procedure = self.base_flow_export(dut_project_procedure)
         else:
             final_procedure = dut_project_procedure
 
