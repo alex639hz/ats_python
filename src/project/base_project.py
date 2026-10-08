@@ -11,14 +11,17 @@ from engine.procedure_builder import ProcedureBuilder
 from engine.constants import *
 
 # from instruments.instrument import Instrument
+from engine.types import StepInterface
 from engine.utils import Utils
 from project.instruments.instrument_repo import repository
 from project.instruments.types.instrument_power_supply import PowerSupply
 from project.instruments.types.instrument_dmm import Dmm
-from project.instruments.types.instrument_scope import Scope
+
 from project.libs.validation_session import DEF_PASS, ValidationSession
-from project.presets.power_integrity import TestBuilderPowerSupply
-from project.template import *
+
+# from project.instruments.types.instrument_scope import Scope
+# from project.presets.power_integrity import TestBuilderPowerSupply
+# from project.template import *
 
 # from project.dut.dut_a import DutA
 

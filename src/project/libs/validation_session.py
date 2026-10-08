@@ -2,6 +2,7 @@
 
 from engine.constants import DEF_DB_COL_SESSION, DEF_DB_COL_TEST
 from engine.framework import framework
+from project.db import database
 
 DEF_PASS = True
 DEF_FAIL = not DEF_PASS
@@ -16,7 +17,7 @@ class ValidationSession:
         self.results = []
         # self.results_status = False
         # self.results_payload = None
-        self.db = framework.db
+        self.db = database
         self.created_at = framework.get_time_datetime()
         self.status: bool
         session_db = {

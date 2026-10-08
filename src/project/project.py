@@ -8,11 +8,14 @@ from engine.logger import create_log
 from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
 from engine.constants import *
+from engine.types import StepInterface
 from engine.utils import Utils
 from project.base_project import BaseProject
-from project.presets.power_integrity import TestBuilderPowerSupply
+
+# from project.presets.power_integrity import TestBuilderPowerSupply
 from project.dut.dut_a import DutA
-from project.template import *
+
+# from project.template import *
 
 logger = logging.getLogger("[user]")
 
@@ -108,14 +111,14 @@ class Project(BaseProject):
         case_type = case["test_type"]
         case_label = case["label"]
 
-        if case_type == "testA":
-            template_a = TemplateA("test_A")
-            case_procedure = template_a.get_procedure()
-            framework.procedure_append(case_procedure)
-            self.test_proc = case_procedure
-        else:
-            raise Exception("case type error")
-            # self.framework.context.attribute_set("case_procedure", case_procedure)
+        # if case_type == "testA":
+        #     template_a = TemplateA("test_A")
+        #     case_procedure = template_a.get_procedure()
+        #     framework.procedure_append(case_procedure)
+        #     self.test_proc = case_procedure
+        # else:
+        #     raise Exception("case type error")
+        # self.framework.context.attribute_set("case_procedure", case_procedure)
 
     def runtime_exec(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)

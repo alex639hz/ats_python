@@ -38,7 +38,6 @@ class Procedure:
     def framework_set(self, framework: Framework):
         self.logger = framework.logger
         self.framework = framework
-        self.db = framework.db
         return self
 
     def get_worker_from_active_step(self) -> Worker:

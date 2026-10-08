@@ -14,7 +14,6 @@ from engine.context import Context
 from engine.logger import setup_logging
 from engine.pipeline import Pipeline
 from engine.constants import *
-from engine.db import database
 from engine.server.server_main import Server
 from engine.utils import Utils
 
@@ -35,7 +34,6 @@ class Framework:
         self._procedure_list: list["Procedure"] = []
         self._procedure_dict: dict[str, int] = {}
         self.context: Context = Context(self)
-        self.db = database
         self.server = Server()
 
         if USE_LOGGING:
