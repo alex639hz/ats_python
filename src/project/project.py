@@ -2,6 +2,7 @@
 
 import logging
 import time
+import json
 
 from engine.framework import framework
 from engine.logger import create_log
@@ -27,8 +28,8 @@ class Project(BaseProject):
         self.dut = DutA()
 
     def project_export(self, dut_test_):
-        project_flow_build = ProcedureBuilder("project_alfa")
-        project_flow_build.step_call(dut_test_)
+        project_flow_build = ProcedureBuilder("alfa")
+        # project_flow_build.step_call(dut_test_)
         dut_project_procedure = project_flow_build.generate_procedure()
         # dut_test_procedure = self.build_dut_test(dut_test_)
         USE_BASE_PROJECT = True
@@ -74,7 +75,7 @@ class Project(BaseProject):
             READ_INTERVAL_SECONDS = 2
             procedure, args = Utils.extract_step_interface(step_interface)
             step_label = procedure.get_active_step().label
-            procedure.nextstate_wait_and_repeat(READ_INTERVAL_SECONDS)
+            procedure.nextstate_sleep_and_repeat(READ_INTERVAL_SECONDS)
             return f"proc:{procedure.label} step: {step_label}"
 
         procedure, args = Utils.extract_step_interface(step_interface)
@@ -105,50 +106,17 @@ class Project(BaseProject):
         # dut.register_write(address, value)
         return f"write register address:{address} value{value}"
 
-    def runtime_call_template(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        case = procedure.context.attribute_get("case")["case"]
-        case_type = case["test_type"]
-        case_label = case["label"]
-
-        # if case_type == "testA":
-        #     template_a = TemplateA("test_A")
-        #     case_procedure = template_a.get_procedure()
-        #     framework.procedure_append(case_procedure)
-        #     self.test_proc = case_procedure
-        # else:
-        #     raise Exception("case type error")
-        # self.framework.context.attribute_set("case_procedure", case_procedure)
-
-    def runtime_exec(self, step_interface: StepInterface):
-        procedure, args = Utils.extract_step_interface(step_interface)
-        test_a = procedure.framework.procedure_get_by_label("test_A")
-        is_running = test_a.is_running()
-        if is_running:
-            procedure.nextstate_stay()
-            return
-
-        res = test_a.context.attribute_get("result")
-        pass
-
-    def get_waveform_procedure(self):
-        scope: Scope = repository.get_instrument_by_label("scope")
-        scope.get_waveform_single()
-
     @staticmethod
     def my_worker(step_interface: StepInterface):
         """demonstrate a worker running in a separate thread."""
         procedure, args = Utils.extract_step_interface(step_interface)
         path = LOG_FOLDER / f"test.log"
 
-        import json
-
         with open(path, "r", encoding="utf-8") as f:
             for line in f:
                 record = json.loads(line)
                 logger.info("hello worker " + record["level"])
 
-        # simulate some work
         for i in range(3):
             time.sleep(0.5)
             logger.info(f"worker stage: {i}")

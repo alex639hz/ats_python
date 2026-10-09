@@ -20,6 +20,7 @@ class ProcedureBuilder:
         self.steps: list["Step"] = []
 
     def append_step_by_elements(self, op: STEP, args, label):
+        """add a step to procedure"""
         step = Step(op, args, label, step_functions[op])
         self.steps.append(step)
         return self
@@ -32,14 +33,11 @@ class ProcedureBuilder:
 
         return procedure
 
-    def add_step_null(self, label):
-        self.append_step_by_elements(STEP.NULL, NOARG, label)
+    # def step_framework_exit(self, msg="", label=""):
+    #     self.append_step_by_elements(STEP.FRAMEWORK_EXIT, {"msg": msg}, label)
 
-    def step_framework_exit(self, msg="", label=""):
-        self.append_step_by_elements(STEP.FRAMEWORK_EXIT, {"msg": msg}, label)
-
-    def step_procedure_stop(self, msg="", label=""):
-        self.append_step_by_elements(STEP.PROCEDURE_STOP, {"msg": msg}, label)
+    # def step_procedure_stop(self, msg="", label=""):
+    #     self.append_step_by_elements(STEP.PROCEDURE_STOP, {"msg": msg}, label)
 
     def insert_procedure(self, procedure_to_insert: Procedure):
         for step in procedure_to_insert._steps:
@@ -50,16 +48,18 @@ class ProcedureBuilder:
             STEP_ARG.FUNCTION: function,
             STEP_ARG.ARGS: args,
         }
+        try:
+            label = function.__name__ if label == "__name__" else label
 
-        label = function.__name__ if label == "__name__" else label
+            self.append_step_by_elements(
+                STEP.FUNC_CALL,
+                step_args,
+                label,
+            )
+        except Exception as err:
+            framework.log_msg(f"{err}")
 
-        self.append_step_by_elements(
-            STEP.FUNCTION_CALL,
-            step_args,
-            label,
-        )
-
-    def add_step_delay(self, seconds: float, label=DEF_NO_LABEL):
+    def step_sleep(self, seconds: float, label=DEF_NO_LABEL):
         args = {STEP_ARG.DURATION_SECONDS: seconds}
         self.append_step_by_elements(STEP.DELAY_START, args, label)
         self.append_step_by_elements(STEP.DELAY_WAIT, args, DEF_NO_LABEL)

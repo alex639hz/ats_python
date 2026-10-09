@@ -36,7 +36,7 @@ class STEP(Enum):
     DELAY_WAIT = "TIMER_WAIT"  # wait for a timer to complete
     SCRIPT_RUN = "SCRIPT_RUN"  # execute external script
     SCPI_REQUEST = "SCPI_REQUEST"  # send a scpi command to a device
-    FUNCTION_CALL = "FUNCTION_CALL"  # call a user function
+    FUNC_CALL = "FUNC_CALL"  # call function
     WORKER_START = "START_WORKER"  # call a user function as thread
     WORKER_WAIT = "WAIT_WORKER"  # call a user function as thread
 

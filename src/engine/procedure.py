@@ -189,10 +189,11 @@ class Procedure:
         self.nextstate_set(DEF_NEXTSTATE_OP.NEXT)
         self.push_awake_request(sleep_seconds)
 
-    def nextstate_wait_and_repeat(self, sleep_seconds: float):
+    def nextstate_sleep_and_repeat(self, seconds: float):
+        """go to sleep for x seconds and repeat step"""
         self.stop()
         self.nextstate_set(DEF_NEXTSTATE_OP.STAY)
-        self.push_awake_request(sleep_seconds)
+        self.push_awake_request(seconds)
 
     def nextstate_stop(self, sleep_seconds=None):
         self.stop()
@@ -211,8 +212,10 @@ class Procedure:
         )
         # self.nextstate_set(DEF_NEXTSTATE_OP.JUMP, idx)
 
-    def nextstate_exit(self):
+    def nextstate_exit(self, msg=None):
         """call app shutdown"""
+        if msg:
+            self.framework.log_msg(msg)
         self.framework.call_shutdown()
 
     def _increase_index(self):

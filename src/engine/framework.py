@@ -32,7 +32,7 @@ class Framework:
         self.pipe_log = Pipeline(DEF_Q_SIZE, "timer")
         self.event_shutdown = threading.Event()
         self._procedure_list: list["Procedure"] = []
-        self._procedure_dict: dict[str, int] = {}
+        self._procedure_dict: dict[str, dict] = {}
         self.context: Context = Context(self)
         self.server = Server()
 
@@ -123,7 +123,7 @@ class Framework:
             procedure.framework_set(self)
             self._procedure_list.append(procedure)
             index = len(self._procedure_list) - 1
-            self._procedure_dict[procedure_label] = index
+            self._procedure_dict[procedure_label] = {"index": index}
             return DEF_OK
 
         def delete_procedure(args={}):
@@ -132,7 +132,7 @@ class Framework:
             is_exist = self._procedure_dict.get(procedure_label)
             if is_exist == None:
                 raise Exception(f"ERR delete_procedure: {procedure_label}")
-            index = self._procedure_dict[procedure_label]
+            index = self._procedure_dict[procedure_label]["index"]
             del self._procedure_list[index]
             del self._procedure_dict[procedure_label]
             return DEF_OK
@@ -216,12 +216,12 @@ class Framework:
         self.pipe_eng.element_push(DEF_CMD.PROCEDURE_DELETE, {"procedure": procedure})
 
     def procedure_get_by_label(self, label) -> Procedure:
-        index = self._procedure_dict[label]
+        index = self._procedure_dict[label]["index"]
         return self._procedure_list[index]
 
     def wait_shutdown(self):
         while not self.event_shutdown.is_set():
-            time.sleep(0.5)
+            time.sleep(0.1)
 
     def start_api_server(self):
         self.server.run_server()

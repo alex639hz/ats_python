@@ -15,28 +15,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger("utils")
 
 
-# class Register:
-#     def __init__(self, address: RegisterAddress, value: int = 0):
-#         self.address: RegisterAddress = address
-#         self.value = value
-
-#     def write_register(self, value):
-#         self.value = value
-
-#     def read_register(self):
-#         return self.value
-
-#     def write_bit(self, bit_idx: BitIndex, bit_value: BitValue):
-#         if bit_value:
-#             self.value |= 1 << bit_idx
-#         else:
-#             self.value &= ~(1 << bit_idx)
-#         return self.value
-
-#     def read_bit(self, bit_idx: BitIndex):
-#         return (self.value >> bit_idx) & 1
-
-
 class Utils:
 
     # TODO create thread launcher helper and update the app

@@ -30,34 +30,26 @@ logger = logging.getLogger("[user]")
 
 class BaseProject:
     def __init__(self, config):
-        self.init_repo_by_json()
+        # self.init_repo_by_json()
         pass
 
     def base_flow_export(self, project_procedure: Procedure):
-        base_flow_build = ProcedureBuilder("base_project_alfa")
+        base_flow_build = ProcedureBuilder("beta")
         base_flow_build.step_call(self.runtime_create_session)
-        base_flow_build.step_call(self.runtime_create_test, label="load_test")
+        base_flow_build.step_call(self.runtime_create_test)
         ENABLE_DUT_TEST = False
         if ENABLE_DUT_TEST:
             base_flow_build.insert_procedure(project_procedure)
         base_flow_build.step_call(self.runtime_update_test_result)
         base_flow_build.step_call(self.runtime_loop_next)
-        SHOULD_STOP_PROCEDURE = False
-        SHOULD_EXIT_FRAMEWORK = False
-        if SHOULD_STOP_PROCEDURE:
-            base_flow_build.step_procedure_stop("procedure stop ...", "stop_procedure")
-        elif SHOULD_EXIT_FRAMEWORK:
-            base_flow_build.step_framework_exit("framework exit ...")
-
         base_flow = base_flow_build.generate_procedure()
         return base_flow
 
     def runtime_demo_init_once(self, step_interface: StepInterface):
-        # return
         procedure, args = Utils.extract_step_interface(step_interface)
         step_label = procedure.get_active_step().label
         procedure.nextstate_next()
-        return f"runtime_demo_init_once OK: {step_label}"
+        return f"runtime_demo_init_once OK"
 
     def runtime_demo_init_in_loop(self, step_interface: StepInterface):
         # return
@@ -72,7 +64,7 @@ class BaseProject:
         if second_counter > 3 and not RUN_FOREVER:
             return
 
-        procedure.nextstate_wait_and_repeat(1)
+        procedure.nextstate_sleep_and_repeat(1)
         return create_log(f"initialize in loop: {second_counter }", {"hello": "world"})
 
     def runtime_create_session(self, step_interface: StepInterface):
@@ -113,8 +105,8 @@ class BaseProject:
             # procedure.stop()
             return "COMPLETED"
 
-        procedure.nextstate_jump_by_label("load_test")
-        return f"going next test index: {session.index}"
+        procedure.nextstate_jump_by_label("runtime_create_test")
+        # return f"going next test index: {session.index}"
 
     def init_repo_by_json(self):
         json_path = f"C:/ats_python/src/project/instruments.json"
@@ -157,7 +149,7 @@ class BaseProject:
                 return
 
             procedure.context.attribute_set("status", "in_process")
-            procedure.nextstate_wait_and_repeat(1)
+            procedure.nextstate_sleep_and_repeat(1)
             return f"degrees: {degrees}"
 
         builder = ProcedureBuilder(f"thermal_{label}")

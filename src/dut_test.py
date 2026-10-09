@@ -3,8 +3,8 @@
 import logging
 
 # from engine.framework import framework
+from engine.constants import *
 from engine.framework import framework
-from engine.procedure import Procedure
 from engine.procedure_builder import ProcedureBuilder
 from engine.types import StepInterface
 from engine.utils import Utils
@@ -19,10 +19,10 @@ class DutTest(Project):
 
     def __init__(self, config):
 
-        super().__init__(config)
+        # super().__init__(config)
 
         dut_test = self.build_dut_test()
-        USE_BASE_PROJECT = False
+        USE_BASE_PROJECT = True
         if USE_BASE_PROJECT:
             final_procedure = self.project_export(dut_test)
         else:
@@ -31,7 +31,7 @@ class DutTest(Project):
         final_procedure.start()
         framework.procedure_append(final_procedure)
 
-    def build_dut_test(self) -> Procedure:
+    def build_dut_test(self):
         dut_flow_build = ProcedureBuilder("dut_test")
         dut_flow_build.step_call(self.runtime_dut_test)
         dut_flow = dut_flow_build.generate_procedure()
@@ -39,19 +39,16 @@ class DutTest(Project):
 
     def runtime_dut_test(self, step_interface: StepInterface):
         procedure, args = Utils.extract_step_interface(step_interface)
-        # self.init_repo_by_json()
-        # scope: Scope = repository.get_instrument_by_label("scope")
-        # dmm: Dmm = repository.get_instrument_by_label("dmm")
-        # thermal: Procedure = procedure.context.attribute_get("thermal")
+        counter = procedure.context.attribute_get("counter", 0)
+        counter = counter + 1
+        procedure.context.attribute_set("counter", counter)
+        msg = f"counter: {counter}"
+        ONE_SECOND = 1
+        MAX_SECONDS = 5
+        if counter < MAX_SECONDS:
+            procedure.nextstate_sleep_and_repeat(ONE_SECOND)
+        else:
+            msg = f"completed: {counter}"
+            procedure.nextstate_exit()
 
-        # status = thermal.context.attribute_get("status")
-        # if status == "in_process":
-        # if status == "completed":
-        # procedure.nextstate_wait_and_repeat(1)
-        # thermal = procedure.context.attribute_delete("thermal")
-
-        # procedure.reset_is_first_run()
-        # return f"www ---completed---- {status}"
-        procedure.framework.log_msg("OOOOPPPPPPPPPPPPPP")
-        procedure.nextstate_wait_and_repeat(1)
-        # return f"www {status}"
+        return msg
